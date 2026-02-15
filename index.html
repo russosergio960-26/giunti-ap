@@ -397,6 +397,14 @@
             border: 1.5px dashed #e2e6f0;
             border-radius: 10px;
         }
+
+        .btn-tipo-doc {
+            padding: 6px 10px; background: white;
+            border: 1.5px solid #e2e6f0; border-radius: 8px;
+            font-size: 11px; font-weight: 700; color: #555;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-tipo-doc:hover { background: #667eea; color: white; border-color: #667eea; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -411,10 +419,53 @@
         </header>
         
         <div class="controls">
-            <div class="export-section" style="margin-bottom: 20px;">
-                <button class="btn-kml" onclick="exportData()">
-                    💾 Esporta Dati (CSV)
+            <div class="export-section" style="margin-bottom: 20px; display:flex; gap:8px;">
+                <button class="btn-kml" onclick="exportData()" style="flex:1">
+                    💾 Esporta CSV
                 </button>
+                <button class="btn-kml" onclick="apriDocs()" style="flex:1; background:linear-gradient(135deg,#2e7d32,#388e3c);">
+                    📄 Cerca Documenti
+                </button>
+            </div>
+
+            <!-- PANNELLO DOCUMENTI -->
+            <div id="docs-panel" style="display:none; margin-bottom:12px; background:#f5f6f8; border-radius:14px; padding:14px; border:1.5px solid #e2e6f0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:12px; font-weight:700; color:#667eea; text-transform:uppercase; letter-spacing:.4px;">📄 Cerca Documenti</span>
+                    <button onclick="chiudiDocs()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#aaa;">✕</button>
+                </div>
+
+                <!-- Ricerca Google Drive -->
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:11px; font-weight:700; color:#555; margin-bottom:5px;">☁️ Google Drive</div>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="driveSearch" placeholder="Cerca su Drive (es. giunto, report...)"
+                            style="flex:1; padding:9px 12px; border:1.5px solid #e2e6f0; border-radius:20px; font-size:12px; outline:none; background:white;"
+                            onkeydown="if(event.key==='Enter') cercaDrive()">
+                        <button onclick="cercaDrive()"
+                            style="padding:9px 14px; background:#667eea; color:white; border:none; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer;">
+                            🔍
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                        <button class="btn-tipo-doc" onclick="cercaDriveTipo('pdf')">📕 PDF</button>
+                        <button class="btn-tipo-doc" onclick="cercaDriveTipo('word')">📘 Word</button>
+                        <button class="btn-tipo-doc" onclick="cercaDriveTipo('excel')">📗 Excel</button>
+                        <button class="btn-tipo-doc" onclick="apriDriveRoot()">📂 Tutto Drive</button>
+                    </div>
+                </div>
+
+                <!-- File locali -->
+                <div>
+                    <div style="font-size:11px; font-weight:700; color:#555; margin-bottom:5px;">📱 File Locali</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn-tipo-doc" onclick="apriFileLocale('pdf')">📕 Apri PDF</button>
+                        <button class="btn-tipo-doc" onclick="apriFileLocale('word')">📘 Apri Word</button>
+                        <button class="btn-tipo-doc" onclick="apriFileLocale('excel')">📗 Apri Excel</button>
+                        <button class="btn-tipo-doc" onclick="apriFileLocale('tutti')">📂 Tutti i file</button>
+                    </div>
+                    <div id="file-locale-preview" style="margin-top:8px;"></div>
+                </div>
             </div>
             
             <!-- PROVINCE -->
@@ -1089,6 +1140,63 @@
             btn.classList.add('active');
             var el = document.getElementById('prov-' + prov);
             if (el) el.style.display = '';
+        }
+
+
+        // ── DOCUMENTI ───────────────────────────────────────
+        function apriDocs() {
+            var p = document.getElementById('docs-panel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+        function chiudiDocs() {
+            document.getElementById('docs-panel').style.display = 'none';
+        }
+
+        function cercaDrive() {
+            var q = document.getElementById('driveSearch').value.trim();
+            if (!q) { apriDriveRoot(); return; }
+            var url = 'https://drive.google.com/drive/search?q=' + encodeURIComponent(q);
+            window.open(url, '_blank');
+        }
+
+        function cercaDriveTipo(tipo) {
+            var tipi = {
+                'pdf':   'mimeType=application/pdf',
+                'word':  'mimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'excel': 'mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            };
+            var q = document.getElementById('driveSearch').value.trim();
+            var query = q ? q + ' type:' + tipo : 'type:' + tipo;
+            var url = 'https://drive.google.com/drive/search?q=' + encodeURIComponent(query);
+            window.open(url, '_blank');
+        }
+
+        function apriDriveRoot() {
+            window.open('https://drive.google.com/drive/my-drive', '_blank');
+        }
+
+        function apriFileLocale(tipo) {
+            var accept = {
+                'pdf':   '.pdf',
+                'word':  '.doc,.docx',
+                'excel': '.xls,.xlsx',
+                'tutti': '.pdf,.doc,.docx,.xls,.xlsx'
+            };
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = accept[tipo] || '*';
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var prev = document.getElementById('file-locale-preview');
+                var url = URL.createObjectURL(file);
+                prev.innerHTML = '<div style="background:white;border:1.5px solid #e2e6f0;border-radius:8px;padding:8px;font-size:12px;">'
+                    + '<b>📄 ' + file.name + '</b><br>'
+                    + '<span style="color:#aaa;font-size:11px;">' + (file.size/1024).toFixed(1) + ' KB</span>&nbsp;'
+                    + '<a href="' + url + '" target="_blank" style="color:#667eea;font-weight:700;">Apri ↗</a>'
+                    + '</div>';
+            };
+            input.click();
         }
 
     </script>
