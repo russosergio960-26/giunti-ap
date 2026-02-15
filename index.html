@@ -728,7 +728,11 @@
                             </div>
                             <div class="se-row">
                                 <div class="se-label">🔌 Cavi Attestati</div>
-                                <table class="ctbl">
+                                <div class="excel-btns">
+                                    <button class="btn-xlsx-imp" onclick="event.stopPropagation(); document.getElementById('ca_xl_${cardId}').click()">📥 Importa cavi attestati</button>
+                                    <input type="file" id="ca_xl_${cardId}" accept=".xlsx,.xls" style="display:none" onchange="caXlsxImporta(event,'ca_${cardId}')">
+                                </div>
+                                <table class="ctbl" id="ca_tbl_${cardId}" style="${caviAttRows ? '' : 'display:none'}">
                                     <thead><tr><th>ID</th><th>Nome Cavo</th><th>Potenzialità</th><th></th></tr></thead>
                                     <tbody id="ca_${cardId}">${caviAttRows}</tbody>
                                 </table>
@@ -1111,6 +1115,47 @@
                 btn.classList.remove('attivo');
                 _nfcAbort = null;
             });
+        }
+
+        function caXlsxImporta(e, tbodyId) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var wb = XLSX.read(ev.target.result, { type: 'binary' });
+                    var ws = wb.Sheets[wb.SheetNames[0]];
+                    var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                    var tbody = document.getElementById(tbodyId);
+                    if (!tbody) return;
+                    // Svuota prima
+                    tbody.innerHTML = '';
+                    // Salta intestazione
+                    var start = 0;
+                    if (rows[0] && typeof rows[0][0] === 'string' && isNaN(rows[0][0])) start = 1;
+                    // Mostra tabella
+                    var tblId = 'ca_tbl_' + tbodyId.replace('ca_','');
+                    var tbl = document.getElementById(tblId);
+                    if (tbl) tbl.style.display = '';
+                    var count = 0;
+                    rows.slice(start).forEach(function(row) {
+                        if (!row[0] && !row[1] && !row[2]) return;
+                        var tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%"></td>' +
+                            '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%"></td>' +
+                            '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%"></td>' +
+                            '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
+                        tbody.appendChild(tr);
+                        count++;
+                    });
+                    alert('✅ Importati ' + count + ' cavi!');
+                } catch(err) {
+                    alert('❌ Errore: ' + err.message);
+                }
+            };
+            reader.readAsBinaryString(file);
+            e.target.value = '';
         }
 
         function caAddRow(tbodyId, data) {
