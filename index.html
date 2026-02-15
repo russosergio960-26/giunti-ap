@@ -344,11 +344,17 @@
         }
         .se-select:focus, .se-textarea:focus { border-color: #667eea; background: #fff; }
         .se-textarea { min-height: 60px; resize: vertical; }
-        .ctbl { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 5px; }
-        .ctbl th { background: #f5f6f8; padding: 5px 6px; text-align: left; font-size: 10px; font-weight: 700; color: #666; border-bottom: 2px solid #e2e6f0; }
-        .ctbl td { padding: 4px 5px; border-bottom: 1px solid #e2e6f0; vertical-align: middle; }
-        .ctbl td input { width: 100%; border: 1px solid #e2e6f0; border-radius: 5px; padding: 4px 5px; font-size: 11px; background: #f5f6f8; outline: none; }
-        .ctbl td input:focus { border-color: #667eea; background: #fff; }
+        .ctbl { width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed; }
+        .ctbl th { background:#f5f6f8; padding:5px 2px; text-align:center; font-size:10px; font-weight:700; color:#666; border-bottom:2px solid #e2e6f0; word-break:break-word; }
+        .ctbl td { padding:4px 2px; border-bottom:1px solid #e2e6f0; vertical-align:middle; }
+        .ctbl td input { width:100%; border:1px solid #e2e6f0; border-radius:5px; padding:4px 2px; font-size:11px; background:#f5f6f8; outline:none; box-sizing:border-box; min-width:0; text-overflow:ellipsis; }
+        .ctbl td input:focus { border-color:#667eea; background:#fff; }
+        .ctbl th:nth-child(1),.ctbl td:nth-child(1) { width:17%; }
+        .ctbl th:nth-child(2),.ctbl td:nth-child(2) { width:23%; }
+        .ctbl th:nth-child(3),.ctbl td:nth-child(3) { width:15%; }
+        .ctbl th:nth-child(4),.ctbl td:nth-child(4) { width:15%; }
+        .ctbl th:nth-child(5),.ctbl td:nth-child(5) { width:23%; }
+        .ctbl th:nth-child(6),.ctbl td:nth-child(6) { width:7%; }
         .btn-dr { background: #ffebee; color: #c62828; border: none; border-radius: 5px; width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
         .btn-ar { width: 100%; padding: 6px; background: #f5f6f8; border: 1.5px dashed #b0bec5; border-radius: 7px; color: #667eea; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 4px; }
         .fgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 6px; }
