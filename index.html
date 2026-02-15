@@ -349,12 +349,11 @@
         .ctbl td { padding:4px 2px; border-bottom:1px solid #e2e6f0; vertical-align:middle; }
         .ctbl td input { width:100%; border:1px solid #e2e6f0; border-radius:5px; padding:4px 2px; font-size:11px; background:#f5f6f8; outline:none; box-sizing:border-box; min-width:0; text-overflow:ellipsis; }
         .ctbl td input:focus { border-color:#667eea; background:#fff; }
-        .ctbl th:nth-child(1),.ctbl td:nth-child(1) { width:17%; }
-        .ctbl th:nth-child(2),.ctbl td:nth-child(2) { width:23%; }
-        .ctbl th:nth-child(3),.ctbl td:nth-child(3) { width:15%; }
-        .ctbl th:nth-child(4),.ctbl td:nth-child(4) { width:15%; }
-        .ctbl th:nth-child(5),.ctbl td:nth-child(5) { width:23%; }
-        .ctbl th:nth-child(6),.ctbl td:nth-child(6) { width:7%; }
+        .ctbl th:nth-child(1),.ctbl td:nth-child(1) { width:28%; }
+        .ctbl th:nth-child(2),.ctbl td:nth-child(2) { width:18%; }
+        .ctbl th:nth-child(3),.ctbl td:nth-child(3) { width:18%; }
+        .ctbl th:nth-child(4),.ctbl td:nth-child(4) { width:28%; }
+        .ctbl th:nth-child(5),.ctbl td:nth-child(5) { width:8%; }
         .btn-dr { background: #ffebee; color: #c62828; border: none; border-radius: 5px; width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
         .btn-ar { width: 100%; padding: 6px; background: #f5f6f8; border: 1.5px dashed #b0bec5; border-radius: 7px; color: #667eea; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 4px; }
         .fgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 6px; }
@@ -373,6 +372,31 @@
         .btn-xlsx-exp { flex:1; padding:6px; background:#e3f2fd; border:1.5px solid #90caf9; border-radius:8px; color:#1565c0; font-size:11px; font-weight:700; cursor:pointer; }
         .btn-xlsx-imp:hover { background:#c8e6c9; }
         .btn-xlsx-exp:hover { background:#bbdefb; }
+
+        /* ── PROVINCE ─────────────────────────────────────── */
+        .province-bar {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .btn-prov {
+            flex: 1; min-width: 60px;
+            padding: 8px 4px; border: 2px solid #667eea;
+            border-radius: 10px; background: white;
+            color: #667eea; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-align: center;
+            transition: all .2s;
+        }
+        .btn-prov.active {
+            background: #667eea; color: white;
+        }
+        .btn-prov:hover { background: #667eea; color: white; }
+        .prov-circuits { margin-bottom: 6px; }
+        .prov-empty {
+            text-align: center; color: #aaa;
+            font-size: 12px; padding: 10px;
+            border: 1.5px dashed #e2e6f0;
+            border-radius: 10px;
+        }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -393,21 +417,51 @@
                 </button>
             </div>
             
-            <div class="filters">
+            <!-- PROVINCE -->
+            <div class="province-bar">
+                <button class="btn-prov active" onclick="toggleProv('bologna',this)">📍 Bologna</button>
+                <button class="btn-prov" onclick="toggleProv('ferrara',this)">📍 Ferrara</button>
+                <button class="btn-prov" onclick="toggleProv('modena',this)">📍 Modena</button>
+                <button class="btn-prov" onclick="toggleProv('imola',this)">📍 Imola</button>
+                <button class="btn-prov" onclick="toggleProv('parma',this)">📍 Parma</button>
+            </div>
+
+            <!-- CIRCUITI BOLOGNA -->
+            <div class="filters prov-circuits" id="prov-bologna">
                 <button class="btn btn-galvani" data-c="galvani">Galvani</button>
                 <button class="btn btn-corticella" data-c="corticella">Corticella</button>
-                
                 <button class="btn btn-sangiorgio" data-c="sangiorgio">S.Giorgio</button>
                 <button class="btn btn-lavis" data-c="lavis">Zola Predosa</button>
                 <button class="btn btn-stadio" data-c="stadio">Stadio</button>
                 <button class="btn btn-chiesanuova" data-c="chiesanuova">Chiesanuova</button>
-                
-                
-                
-                <button class="btn btn-ld3po015f" data-c="ld3po015f">Maserati_Costabili</button>
+                <button class="btn btn-ld3po015f" data-c="ld3po015f">Maserati</button>
                 <button class="btn btn-pulega" data-c="pulega">Pulega</button>
                 <button class="btn btn-castelmaggiore" data-c="castelmaggiore">Castel Maggiore</button>
-                <button class="btn btn-all" onclick="toggleAll()">Tutti/Nessuno</button>
+            </div>
+
+            <!-- CIRCUITI FERRARA (vuoto) -->
+            <div class="filters prov-circuits" id="prov-ferrara" style="display:none">
+                <div class="prov-empty">Nessun circuito — in arrivo</div>
+            </div>
+
+            <!-- CIRCUITI MODENA (vuoto) -->
+            <div class="filters prov-circuits" id="prov-modena" style="display:none">
+                <div class="prov-empty">Nessun circuito — in arrivo</div>
+            </div>
+
+            <!-- CIRCUITI IMOLA (vuoto) -->
+            <div class="filters prov-circuits" id="prov-imola" style="display:none">
+                <div class="prov-empty">Nessun circuito — in arrivo</div>
+            </div>
+
+            <!-- CIRCUITI PARMA (vuoto) -->
+            <div class="filters prov-circuits" id="prov-parma" style="display:none">
+                <div class="prov-empty">Nessun circuito — in arrivo</div>
+            </div>
+
+            <!-- TUTTI/NESSUNO -->
+            <div style="margin-top:6px;">
+                <button class="btn btn-all" style="width:100%" onclick="toggleAll()">Tutti/Nessuno</button>
             </div>
             
             
@@ -502,11 +556,10 @@
 
                     const caviRows = (sv.cavi||[]).map(c=>
                         `<tr>
-                            <td><input type="text" value="${c.idcavo||''}" placeholder="ID"></td>
-                            <td><input type="text" value="${c.nome||''}" placeholder="Nome cavo A"></td>
-                            <td><input type="text" value="${c.fibraA||''}" placeholder="Fibra" style="width:46px"></td>
-                            <td><input type="text" value="${c.fibraB||''}" placeholder="Fibra" style="width:46px"></td>
-                            <td><input type="text" value="${c.nome2||''}" placeholder="Nome cavo B"></td>
+                            <td><input type="text" value="${c.nome||''}" placeholder="Cavo A"></td>
+                            <td><input type="text" value="${c.fibraA||''}" placeholder="F1"></td>
+                            <td><input type="text" value="${c.fibraB||''}" placeholder="F2"></td>
+                            <td><input type="text" value="${c.nome2||''}" placeholder="Cavo B"></td>
                             <td><button class="btn-dr" onclick="this.closest('tr').remove()">🗑</button></td>
                         </tr>`
                     ).join('');
@@ -546,7 +599,7 @@
                                     <input type="file" id="xl_${cardId}" accept=".xlsx,.xls" style="display:none" onchange="xlsxImporta(event,'cv_${cardId}')">
                                 </div>
                                 <table class="ctbl" id="tbl_${cardId}" style="${caviRows ? '' : 'display:none'}">
-                                    <thead><tr><th>ID Cavo</th><th>Nome Cavo</th><th>Fibra</th><th>Fibra</th><th>Nome Cavo</th><th></th></tr></thead>
+                                    <thead><tr><th>Cavo</th><th>Fibra</th><th>Fibra</th><th>Cavo</th><th></th></tr></thead>
                                     <tbody id="cv_${cardId}">${caviRows}</tbody>
                                 </table>
                             </div>
@@ -829,11 +882,10 @@
                 var inp = tr.querySelectorAll('input');
                 if (inp[0] && inp[0].value.trim()) {
                     cavi.push({
-                        idcavo: inp[0].value,
-                        nome:   inp[1] ? inp[1].value : '',
-                        fibraA: inp[2] ? inp[2].value : '',
-                        fibraB: inp[3] ? inp[3].value : '',
-                        nome2:  inp[4] ? inp[4].value : ''
+                        nome:   inp[0].value,
+                        fibraA: inp[1] ? inp[1].value : '',
+                        fibraB: inp[2] ? inp[2].value : '',
+                        nome2:  inp[3] ? inp[3].value : ''
                     });
                 }
             });
@@ -975,11 +1027,10 @@
                     rows.slice(start).forEach(function(row) {
                         if (!row[0]) return;
                         seAddCavo(tbodyId, {
-                            idcavo: String(row[0] || ''),
-                            nome:   String(row[1] || ''),
-                            fibraA: String(row[2] || ''),
-                            fibraB: String(row[3] || ''),
-                            nome2:  String(row[4] || '')
+                            nome:   String(row[0] || ''),
+                            fibraA: String(row[1] || ''),
+                            fibraB: String(row[2] || ''),
+                            nome2:  String(row[3] || '')
                         });
                     });
                     alert('✅ Importati ' + (rows.length - start) + ' cavi!');
@@ -1021,6 +1072,23 @@
             // Nome file: nome giunto pulito
             var fname = (nomeGiunto || 'giunto').replace(/[^a-zA-Z0-9_\-]/g, '_') + '.xlsx';
             XLSX.writeFile(wb, fname);
+        }
+
+
+        // ── PROVINCE ───────────────────────────────────────
+        function toggleProv(prov, btn) {
+            // Deseleziona tutti i tasti provincia
+            document.querySelectorAll('.btn-prov').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            // Nascondi tutti i circuiti
+            document.querySelectorAll('.prov-circuits').forEach(function(el) {
+                el.style.display = 'none';
+            });
+            // Mostra provincia selezionata
+            btn.classList.add('active');
+            var el = document.getElementById('prov-' + prov);
+            if (el) el.style.display = '';
         }
 
     </script>
