@@ -405,6 +405,35 @@
             cursor: pointer; transition: all .2s;
         }
         .btn-tipo-doc:hover { background: #667eea; color: white; border-color: #667eea; }
+
+        .btn-fe-centro     { background: #0277bd; color: white; }
+        .btn-fe-mulinetto  { background: #00838f; color: white; }
+        .btn-fe-mizzana    { background: #558b2f; color: white; }
+        .btn-fe-portareno  { background: #6a1b9a; color: white; }
+
+        .btn-mo-centro   { background: #c62828; color: white; }
+        .btn-mo-est      { background: #e65100; color: white; }
+        .btn-mo-giardini { background: #2e7d32; color: white; }
+        .btn-mo-ovest    { background: #1565c0; color: white; }
+        .btn-mo-sacca    { background: #6a1b9a; color: white; }
+        .btn-mo-sud      { background: #00695c; color: white; }
+
+        .btn-im-centro    { background: #b71c1c; color: white; }
+        .btn-im-serraglio { background: #f57f17; color: white; }
+        .btn-im-montanara { background: #1b5e20; color: white; }
+        .btn-im-belvedere { background: #0d47a1; color: white; }
+        .btn-im-mordano   { background: #4a148c; color: white; }
+
+        .btn-medicina        { background: #ad1457; color: white; }
+        .btn-castelsanpietro { background: #4e342e; color: white; }
+        .btn-castelguelfo    { background: #1a237e; color: white; }
+
+        .btn-pr-centro    { background: #c62828; color: white; }
+        .btn-pr-est       { background: #e65100; color: white; }
+        .btn-pr-ovest     { background: #1565c0; color: white; }
+        .btn-pr-parma     { background: #2e7d32; color: white; }
+        .btn-pr-collecchio{ background: #6a1b9a; color: white; }
+        .btn-pr-fidenza   { background: #00695c; color: white; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -488,26 +517,46 @@
                 <button class="btn btn-ld3po015f" data-c="ld3po015f">Maserati</button>
                 <button class="btn btn-pulega" data-c="pulega">Pulega</button>
                 <button class="btn btn-castelmaggiore" data-c="castelmaggiore">Castel Maggiore</button>
+                <button class="btn btn-medicina" data-c="medicina">Medicina</button>
+                <button class="btn btn-castelsanpietro" data-c="castelsanpietro">Castel San Pietro</button>
+                <button class="btn btn-castelguelfo" data-c="castelguelfo">Castel Guelfo</button>
             </div>
 
-            <!-- CIRCUITI FERRARA (vuoto) -->
+            <!-- CIRCUITI FERRARA -->
             <div class="filters prov-circuits" id="prov-ferrara" style="display:none">
-                <div class="prov-empty">Nessun circuito — in arrivo</div>
+                <button class="btn btn-fe-centro" data-c="fe-centro">Ferrara Centro</button>
+                <button class="btn btn-fe-mulinetto" data-c="fe-mulinetto">Ferrara Mulinetto</button>
+                <button class="btn btn-fe-mizzana" data-c="fe-mizzana">Ferrara Mizzana</button>
+                <button class="btn btn-fe-portareno" data-c="fe-portareno">Ferrara Porta Reno</button>
             </div>
 
-            <!-- CIRCUITI MODENA (vuoto) -->
+            <!-- CIRCUITI MODENA -->
             <div class="filters prov-circuits" id="prov-modena" style="display:none">
-                <div class="prov-empty">Nessun circuito — in arrivo</div>
+                <button class="btn btn-mo-centro" data-c="mo-centro">Modena Centro</button>
+                <button class="btn btn-mo-est" data-c="mo-est">Modena Est</button>
+                <button class="btn btn-mo-giardini" data-c="mo-giardini">Modena Giardini</button>
+                <button class="btn btn-mo-ovest" data-c="mo-ovest">Modena Ovest</button>
+                <button class="btn btn-mo-sacca" data-c="mo-sacca">Modena Sacca</button>
+                <button class="btn btn-mo-sud" data-c="mo-sud">Modena Sud</button>
             </div>
 
-            <!-- CIRCUITI IMOLA (vuoto) -->
+            <!-- CIRCUITI IMOLA -->
             <div class="filters prov-circuits" id="prov-imola" style="display:none">
-                <div class="prov-empty">Nessun circuito — in arrivo</div>
+                <button class="btn btn-im-centro" data-c="im-centro">Imola Centro</button>
+                <button class="btn btn-im-serraglio" data-c="im-serraglio">Imola Serraglio</button>
+                <button class="btn btn-im-montanara" data-c="im-montanara">Imola Montanara</button>
+                <button class="btn btn-im-belvedere" data-c="im-belvedere">Imola Belvedere</button>
+                <button class="btn btn-im-mordano" data-c="im-mordano">Mordano</button>
             </div>
 
-            <!-- CIRCUITI PARMA (vuoto) -->
+            <!-- CIRCUITI PARMA -->
             <div class="filters prov-circuits" id="prov-parma" style="display:none">
-                <div class="prov-empty">Nessun circuito — in arrivo</div>
+                <button class="btn btn-pr-centro" data-c="pr-centro">Parma Centro</button>
+                <button class="btn btn-pr-est" data-c="pr-est">Parma Est</button>
+                <button class="btn btn-pr-ovest" data-c="pr-ovest">Parma Ovest</button>
+                <button class="btn btn-pr-parma" data-c="pr-parma">Parma</button>
+                <button class="btn btn-pr-collecchio" data-c="pr-collecchio">Collecchio</button>
+                <button class="btn btn-pr-fidenza" data-c="pr-fidenza">Fidenza</button>
             </div>
 
             <!-- TUTTI/NESSUNO -->
