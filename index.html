@@ -1219,11 +1219,16 @@
         function caAddRow(tbodyId, data) {
             var tbody = document.getElementById(tbodyId);
             if (!tbody) return;
+            // Mostra la tabella se nascosta
+            var tblId = 'ca_tbl_' + tbodyId.replace('ca_','');
+            var tbl = document.getElementById(tblId);
+            if (tbl) tbl.style.display = '';
+            
             var tr = document.createElement('tr');
             tr.innerHTML =
-                '<td><input type="text" placeholder="ID" style="width:50px" value="' + (data && data.id || '') + '"></td>' +
-                '<td><input type="text" placeholder="Nome cavo" value="' + (data && data.nome || '') + '"></td>' +
-                '<td><input type="text" placeholder="es. 144F" value="' + (data && data.pot || '') + '"></td>' +
+                '<td><input type="text" placeholder="ID" value="' + (data && data.id || '') + '" style="text-align:center;width:100%" onclick="event.stopPropagation()"></td>' +
+                '<td><input type="text" placeholder="Nome cavo" value="' + (data && data.nome || '') + '" style="text-align:center;width:100%" onclick="event.stopPropagation()"></td>' +
+                '<td><input type="text" placeholder="es. 144F" value="' + (data && data.pot || '') + '" style="text-align:center;width:100%" onclick="event.stopPropagation()"></td>' +
                 '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
             tbody.appendChild(tr);
         }
@@ -1241,25 +1246,40 @@
                     var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
                     var tbody = document.getElementById(tbodyId);
                     if (!tbody) return;
-                    // Svuota tbody prima di importare
                     tbody.innerHTML = '';
-                    // Salta riga 0 se è intestazione (es. CAVO, FIBRE...)
                     var start = 0;
                     if (rows[0] && typeof rows[0][0] === 'string' && isNaN(rows[0][0])) start = 1;
-                    // Mostra tabella
                     var tblId = 'tbl_' + tbodyId.replace('cv_','');
                     var tbl = document.getElementById(tblId);
                     if (tbl) tbl.style.display = '';
+                    
+                    // Mappa colori
+                    var colori = {
+                        'rosso':     '#ffebee',
+                        'verde':     '#e8f5e9',
+                        'giallo':    '#fff9c4',
+                        'blu':       '#e3f2fd',
+                        'arancione': '#fff3e0',
+                        'viola':     '#f3e5f5',
+                        'grigio':    '#f5f5f5'
+                    };
+                    
                     var count = 0;
                     rows.slice(start).forEach(function(row) {
-                        // Salta righe completamente vuote
                         if (!row[0] && !row[1] && !row[2] && !row[3]) return;
+                        
+                        // Leggo colore dalla 5a colonna (indice 4)
+                        var colore = String(row[4] || '').toLowerCase().trim();
+                        var bg = colori[colore] || '';
+                        var bgStyle = bg ? 'background:' + bg + ';' : '';
+                        
                         var tr = document.createElement('tr');
+                        tr.style.cssText = bgStyle;
                         tr.innerHTML =
-                            '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%"></td>' +
-                            '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%"></td>' +
-                            '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%"></td>' +
-                            '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%"></td>' +
+                            '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
                             '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
                         tbody.appendChild(tr);
                         count++;
