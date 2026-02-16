@@ -738,13 +738,7 @@
                                 </table>
                                 <button class="btn-ar" onclick="event.stopPropagation(); caAddRow('ca_${cardId}')">+ Aggiungi cavo</button>
                             </div>
-                            <div class="se-row">
-                                <div class="se-label">🏷️ Tag / Barcode</div>
-                                <div id="nfc_${cardId}">
-                                    <button class="btn-nfc" onclick="event.stopPropagation(); scanBarcode('${cardId}')">📷 Scansiona Barcode</button>
-                                    <div class="nfc-result" id="nfcres_${cardId}">${sv.nfc ? '<div class=\'nfc-tag-saved\'>✅ Tag salvato: <b>' + sv.nfc + '</b></div>' : ''}</div>
-                                </div>
-                            </div>
+                            <div class="se-row">               </div>
                             <div class="se-row">
                                 <div class="se-label">📝 Note Operative</div>
                                 <textarea class="se-textarea" id="nt_${cardId}" placeholder="Note tecniche, osservazioni...">${sv.note||''}</textarea>
@@ -757,7 +751,7 @@
                                     onchange="seAddFoto(event,'fg_${cardId}')">
                             </div>
                             <div class="se-actions">
-                                <button class="btn-sv" onclick="event.stopPropagation(); seSalva('${cardId}','${k}')">💾 Salva</button>
+                                <button class="btn-sv" onclick="event.stopPropagation(); seSalva('${cardId}','${k}')">💾 Salva dati</button>
                             </div>
                             <div class="sv-ok" id="ok_${cardId}">✅ Dati salvati!</div>
                         </div>
@@ -1134,6 +1128,26 @@
             if (!scheda) return;
             var btnSv = scheda.querySelector('.btn-sv');
             if (btnSv) btnSv.click();
+        }
+
+        function cancellaTag(cardId) {
+            if (!confirm('Cancellare il tag salvato?')) return;
+            // Rimuovo nfc dal localStorage
+            var scheda = document.getElementById(cardId);
+            if (!scheda) return;
+            var btnSv = scheda.querySelector('.btn-sv');
+            // Trovo la chiave k dal tasto salva
+            var k = btnSv ? btnSv.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1] : null;
+            if (k) {
+                var saved = JSON.parse(localStorage.getItem(k) || '{}');
+                delete saved.nfc;
+                localStorage.setItem(k, JSON.stringify(saved));
+            }
+            // Pulisco anche la variabile pending
+            window['nfc_pending_' + cardId] = '';
+            // Aggiorno il div
+            var res = document.getElementById('nfcres_' + cardId);
+            if (res) res.innerHTML = '';
         }
 
         function caXlsxImporta(e, tbodyId) {
