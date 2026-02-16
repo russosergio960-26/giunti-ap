@@ -721,6 +721,13 @@
                                     <button class="btn-xlsx-imp" onclick="event.stopPropagation(); document.getElementById('xl_${cardId}').click()">📥 Importa report fibre</button>
                                     <input type="file" id="xl_${cardId}" accept=".xlsx,.xls" style="display:none" onchange="xlsxImporta(event,'cv_${cardId}')">
                                 </div>
+                                <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                                    <input type="text" id="filt_${cardId}" placeholder="🔍 Filtra per cavo..." onclick="event.stopPropagation()"
+                                        oninput="filtraCavi('cv_${cardId}', this.value)"
+                                        style="flex:1; padding:7px 10px; border:1.5px solid #c5cae9; border-radius:20px; font-size:12px; outline:none; background:#f5f6f8;">
+                                    <button onclick="event.stopPropagation(); document.getElementById('filt_${cardId}').value=''; filtraCavi('cv_${cardId}','')"
+                                        style="padding:6px 10px; background:#f5f6f8; border:1.5px solid #e2e6f0; border-radius:20px; font-size:12px; cursor:pointer; color:#888;">✕</button>
+                                </div>
                                 <table class="ctbl" id="tbl_${cardId}" style="${caviRows ? '' : 'display:none'}">
                                     <thead><tr><th>Cavo</th><th>Fibra</th><th>Fibra</th><th>Cavo</th><th></th></tr></thead>
                                     <tbody id="cv_${cardId}">${caviRows}</tbody>
@@ -1189,6 +1196,24 @@
             };
             reader.readAsBinaryString(file);
             e.target.value = '';
+        }
+
+        function filtraCavi(tbodyId, testo) {
+            var tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+            var t = testo.trim().toLowerCase();
+            var righe = tbody.querySelectorAll('tr');
+            righe.forEach(function(tr) {
+                var inp = tr.querySelectorAll('input');
+                // Cerca in colonna 1 (Cavo A) e colonna 4 (Cavo B)
+                var cavoA = inp[0] ? inp[0].value.toLowerCase() : '';
+                var cavoB = inp[3] ? inp[3].value.toLowerCase() : '';
+                if (!t || cavoA.includes(t) || cavoB.includes(t)) {
+                    tr.style.display = '';
+                } else {
+                    tr.style.display = 'none';
+                }
+            });
         }
 
         function caAddRow(tbodyId, data) {
