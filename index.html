@@ -344,17 +344,16 @@
         }
         .se-select:focus, .se-textarea:focus { border-color: #667eea; background: #fff; }
         .se-textarea { min-height: 60px; resize: vertical; }
-        .ctbl { width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed; overflow-x:auto; }
-        .ctbl th { background:#e8eeff; padding:5px 2px; text-align:center; font-size:9px; font-weight:700; color:#667eea; border-bottom:2px solid #c5cae9; word-break:break-word; }
-        .ctbl td { padding:3px 1px; border-bottom:1px solid #e2e6f0; vertical-align:middle; text-align:center; font-size:10px; }
-        .ctbl td input { width:100%; border:1px solid #e2e6f0; border-radius:4px; padding:3px 2px; font-size:10px; background:#f5f6f8; outline:none; box-sizing:border-box; min-width:0; text-align:center; }
+        .ctbl { width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed; }
+        .ctbl th { background:#e8eeff; padding:6px 3px; text-align:center; font-size:10px; font-weight:700; color:#667eea; border-bottom:2px solid #c5cae9; word-break:break-word; }
+        .ctbl td { padding:4px 2px; border-bottom:1px solid #e2e6f0; vertical-align:middle; text-align:center; }
+        .ctbl td input { width:100%; border:1px solid #e2e6f0; border-radius:5px; padding:4px 3px; font-size:11px; background:#f5f6f8; outline:none; box-sizing:border-box; min-width:0; text-align:center; }
         .ctbl td input:focus { border-color:#667eea; background:#fff; }
-        .ctbl th:nth-child(1),.ctbl td:nth-child(1) { width:25%; text-align:center; }
-        .ctbl th:nth-child(2),.ctbl td:nth-child(2) { width:10%; text-align:center; }
-        .ctbl th:nth-child(3),.ctbl td:nth-child(3) { width:10%; text-align:center; }
-        .ctbl th:nth-child(4),.ctbl td:nth-child(4) { width:25%; text-align:center; }
-        .ctbl th:nth-child(5),.ctbl td:nth-child(5) { width:15%; text-align:center; }
-        .ctbl th:nth-child(6),.ctbl td:nth-child(6) { width:15%; text-align:center; }
+        .ctbl th:nth-child(1),.ctbl td:nth-child(1) { width:30%; text-align:center; }
+        .ctbl th:nth-child(2),.ctbl td:nth-child(2) { width:17%; text-align:center; }
+        .ctbl th:nth-child(3),.ctbl td:nth-child(3) { width:17%; text-align:center; }
+        .ctbl th:nth-child(4),.ctbl td:nth-child(4) { width:30%; text-align:center; }
+        .ctbl th:nth-child(5),.ctbl td:nth-child(5) { width:6%; text-align:center; }
         .btn-dr { background: #ffebee; color: #c62828; border: none; border-radius: 5px; width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
         .btn-ar { width: 100%; padding: 6px; background: #f5f6f8; border: 1.5px dashed #b0bec5; border-radius: 7px; color: #667eea; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 4px; }
         .fgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 6px; }
@@ -735,7 +734,7 @@
                                         style="padding:6px 10px; background:#f5f6f8; border:1.5px solid #e2e6f0; border-radius:20px; font-size:12px; cursor:pointer; color:#888;">✕</button>
                                 </div>
                                 <table class="ctbl" id="tbl_${cardId}" style="${caviRows ? '' : 'display:none'}">
-                                    <thead><tr><th>Cavo</th><th>Fibre</th><th>Fibra</th><th>Cavo</th><th>Stato</th><th>Data</th></tr></thead>
+                                    <thead><tr><th>Cavo</th><th>Fibra</th><th>Fibra</th><th>Cavo</th><th></th></tr></thead>
                                     <tbody id="cv_${cardId}">${caviRows}</tbody>
                                 </table>
                             </div>
@@ -1269,17 +1268,25 @@
             var tbl = document.getElementById(tblId);
             if (tbl) tbl.style.display = '';
             
+            var colori = {
+                'rosso': '#ffebee', 'verde': '#e8f5e9', 'giallo': '#fff9c4',
+                'blu': '#e3f2fd', 'arancione': '#fff3e0', 'viola': '#f3e5f5', 'grigio': '#f5f5f5'
+            };
+            
             var count = 0;
             rows.slice(start).forEach(function(row) {
                 if (!row[0] && !row[1] && !row[2] && !row[3]) return;
+                var colore = String(row[4] || '').toLowerCase().trim();
+                var bg = colori[colore] || '';
+                var bgStyle = bg ? 'background:' + bg + ';' : '';
                 var tr = document.createElement('tr');
+                tr.style.cssText = bgStyle;
                 tr.innerHTML =
-                    '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                    '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                    '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                    '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                    '<td><input type="text" value="' + String(row[4]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                    '<td><input type="text" value="' + String(row[5]||'') + '" style="text-align:center;width:100%;font-size:9px"></td>';
+                    '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                    '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                    '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                    '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                    '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
                 tbody.appendChild(tr);
                 count++;
             });
@@ -1317,15 +1324,10 @@
             var righe = tbody.querySelectorAll('tr');
             righe.forEach(function(tr) {
                 var inp = tr.querySelectorAll('input');
-                // Cerca in tutte le colonne
+                // Cerca in colonna 1 (Cavo A) e colonna 4 (Cavo B)
                 var cavoA = inp[0] ? inp[0].value.toLowerCase() : '';
-                var fibre = inp[1] ? inp[1].value.toLowerCase() : '';
-                var fibra = inp[2] ? inp[2].value.toLowerCase() : '';
                 var cavoB = inp[3] ? inp[3].value.toLowerCase() : '';
-                var stato = inp[4] ? inp[4].value.toLowerCase() : '';
-                var data = inp[5] ? inp[5].value.toLowerCase() : '';
-                
-                if (!t || cavoA.includes(t) || cavoB.includes(t) || fibre.includes(t) || fibra.includes(t) || stato.includes(t) || data.includes(t)) {
+                if (!t || cavoA.includes(t) || cavoB.includes(t)) {
                     tr.style.display = '';
                 } else {
                     tr.style.display = 'none';
@@ -1370,19 +1372,34 @@
                     var tbl = document.getElementById(tblId);
                     if (tbl) tbl.style.display = '';
                     
+                    // Mappa colori
+                    var colori = {
+                        'rosso':     '#ffebee',
+                        'verde':     '#e8f5e9',
+                        'giallo':    '#fff9c4',
+                        'blu':       '#e3f2fd',
+                        'arancione': '#fff3e0',
+                        'viola':     '#f3e5f5',
+                        'grigio':    '#f5f5f5'
+                    };
+                    
                     var count = 0;
                     rows.slice(start).forEach(function(row) {
-                        // Salta righe vuote
                         if (!row[0] && !row[1] && !row[2] && !row[3]) return;
                         
+                        // Leggo colore dalla 5a colonna (indice 4)
+                        var colore = String(row[4] || '').toLowerCase().trim();
+                        var bg = colori[colore] || '';
+                        var bgStyle = bg ? 'background:' + bg + ';' : '';
+                        
                         var tr = document.createElement('tr');
+                        tr.style.cssText = bgStyle;
                         tr.innerHTML =
-                            '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                            '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                            '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                            '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                            '<td><input type="text" value="' + String(row[4]||'') + '" style="text-align:center;width:100%;font-size:10px"></td>' +
-                            '<td><input type="text" value="' + String(row[5]||'') + '" style="text-align:center;width:100%;font-size:9px"></td>';
+                            '<td><input type="text" value="' + String(row[0]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[1]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[2]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><input type="text" value="' + String(row[3]||'') + '" style="text-align:center;width:100%;' + bgStyle + '"></td>' +
+                            '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
                         tbody.appendChild(tr);
                         count++;
                     });
