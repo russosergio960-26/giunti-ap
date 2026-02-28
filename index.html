@@ -804,7 +804,11 @@
                                     onchange="seAddFoto(event,'fg_${cardId}')">
                             </div>
                             <div class="se-actions">
-                                <button class="btn-sv" onclick="event.stopPropagation(); seSalva('${cardId}','${k}')">💾 Salva dati</button>
+                                <button class="btn-sv" onclick="event.stopPropagation(); seSalva('${cardId}','${k}')" style="flex:2">💾 Salva dati</button>
+                                <button onclick="event.stopPropagation(); caricaDaSheets('${k}', function(dati) { ricaricaScheda('${cardId}', dati); })" 
+                                    style="flex:1; padding:9px; background:#4caf50; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer;">
+                                    🔄 Carica da Drive
+                                </button>
                             </div>
                             <div class="sv-ok" id="ok_${cardId}">✅ Dati salvati!</div>
                         </div>
@@ -1115,6 +1119,82 @@
                 // Se errore, usa localStorage
                 callback(JSON.parse(localStorage.getItem(k) || '{}'));
             });
+        }
+
+        function ricaricaScheda(cardId, dati) {
+            // Ricarica stato
+            var stato = document.getElementById('st_' + cardId);
+            if (stato) stato.value = dati.stato || '';
+            
+            // Ricarica note
+            var note = document.getElementById('nt_' + cardId);
+            if (note) note.value = dati.note || '';
+            
+            // Ricarica link Drive
+            var linkCV = document.getElementById('drivelink_cv_' + cardId);
+            if (linkCV) linkCV.value = dati.driveLinkCV || '';
+            var linkCA = document.getElementById('drivelink_ca_' + cardId);
+            if (linkCA) linkCA.value = dati.driveLinkCA || '';
+            
+            // Ricarica cavi report fibre
+            var tbodyCavi = document.getElementById('cv_' + cardId);
+            if (tbodyCavi && dati.cavi) {
+                tbodyCavi.innerHTML = '';
+                dati.cavi.forEach(function(c) {
+                    var tr = document.createElement('tr');
+                    if (c.stato || c.data) {
+                        tr.innerHTML =
+                            '<td><input type="text" value="' + (c.nome||'') + '" style="text-align:center;font-size:10px"></td>' +
+                            '<td><input type="text" value="' + (c.fibraA||'') + '" style="text-align:center;font-size:10px"></td>' +
+                            '<td><input type="text" value="' + (c.fibraB||'') + '" style="text-align:center;font-size:10px"></td>' +
+                            '<td><input type="text" value="' + (c.nome2||'') + '" style="text-align:center;font-size:10px"></td>' +
+                            '<td><input type="text" value="' + (c.stato||'') + '" style="text-align:center;font-size:10px"></td>' +
+                            '<td><input type="text" value="' + (c.data||'') + '" style="text-align:center;font-size:9px"></td>' +
+                            '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
+                    } else {
+                        tr.innerHTML =
+                            '<td><input type="text" value="' + (c.nome||'') + '"></td>' +
+                            '<td><input type="text" value="' + (c.fibraA||'') + '"></td>' +
+                            '<td><input type="text" value="' + (c.fibraB||'') + '"></td>' +
+                            '<td><input type="text" value="' + (c.nome2||'') + '"></td>' +
+                            '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
+                    }
+                    tbodyCavi.appendChild(tr);
+                });
+                var tbl = document.getElementById('tbl_' + cardId.replace('c_',''));
+                if (tbl) tbl.style.display = '';
+            }
+            
+            // Ricarica cavi attestati
+            var tbodyCA = document.getElementById('ca_' + cardId);
+            if (tbodyCA && dati.caviAtt) {
+                tbodyCA.innerHTML = '';
+                dati.caviAtt.forEach(function(c) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><input type="text" value="' + (c.id||'') + '" style="text-align:center;width:100%"></td>' +
+                        '<td><input type="text" value="' + (c.nome||'') + '" style="text-align:center;width:100%"></td>' +
+                        '<td><input type="text" value="' + (c.pot||'') + '" style="text-align:center;width:100%"></td>' +
+                        '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
+                    tbodyCA.appendChild(tr);
+                });
+                var tblCA = document.getElementById('ca_tbl_' + cardId.replace('c_',''));
+                if (tblCA) tblCA.style.display = '';
+            }
+            
+            // Ricarica foto
+            var fotoGrid = document.getElementById('fg_' + cardId);
+            if (fotoGrid && dati.foto) {
+                fotoGrid.innerHTML = '';
+                dati.foto.forEach(function(src) {
+                    var w = document.createElement('div');
+                    w.className = 'fwrap';
+                    w.innerHTML = '<img class="fimg" src="' + src + '"><button class="fdel" onclick="this.parentElement.remove()">✕</button>';
+                    fotoGrid.appendChild(w);
+                });
+            }
+            
+            alert('✅ Dati caricati da Drive!');
         }
 
         function seSalva(cardId, k) {
