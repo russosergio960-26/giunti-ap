@@ -1050,19 +1050,84 @@
             e.target.value = '';
         }
 
+        // ── GOOGLE SHEETS SYNC ─────────────────────────────────
+        function salvasuSheets(cardId, k, dati) {
+            // Salva sia su localStorage che su Sheets
+            localStorage.setItem(k, JSON.stringify(dati));
+            
+            // Prepara i dati per Google Sheets
+            var payload = {
+                giunto_id: k,
+                nome: dati.nome || '',
+                circuito: dati.circuito || '',
+                stato: dati.stato,
+                cavi: dati.cavi,
+                caviAtt: dati.caviAtt,
+                note: dati.note,
+                driveLinkCV: dati.driveLinkCV,
+                driveLinkCA: dati.driveLinkCA,
+                nfc: dati.nfc,
+                foto: dati.foto,
+                utente: 'Utente' // Puoi personalizzare con nome utente
+            };
+            
+            // Invia a Google Sheets
+            fetch(SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(function() {
+                console.log('✅ Salvato su Google Sheets');
+            }).catch(function(err) {
+                console.log('⚠️ Errore Sheets, salvato solo in locale:', err);
+            });
+        }
+        
+        function caricaDaSheets(k, callback) {
+            // Prova a caricare da Google Sheets
+            fetch(SHEETS_URL + '?id=' + encodeURIComponent(k))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.length > 0) {
+                    // Trova il giunto nel risultato
+                    var found = data.find(function(row) { return row[0] === k; });
+                    if (found) {
+                        var dati = {
+                            stato: found[3] || '',
+                            cavi: JSON.parse(found[4] || '[]'),
+                            caviAtt: JSON.parse(found[5] || '[]'),
+                            note: found[6] || '',
+                            nfc: found[9] || '',
+                            foto: JSON.parse(found[10] || '[]'),
+                            driveLinkCV: found[7] || '',
+                            driveLinkCA: found[8] || ''
+                        };
+                        localStorage.setItem(k, JSON.stringify(dati));
+                        callback(dati);
+                        return;
+                    }
+                }
+                // Se non trovato su Sheets, usa localStorage
+                callback(JSON.parse(localStorage.getItem(k) || '{}'));
+            })
+            .catch(function() {
+                // Se errore, usa localStorage
+                callback(JSON.parse(localStorage.getItem(k) || '{}'));
+            });
+        }
+
         function seSalva(cardId, k) {
             var cavi = [];
             document.querySelectorAll('#cv_' + cardId + ' tr').forEach(function(tr) {
                 var inp = tr.querySelectorAll('input');
                 if (inp[0] && inp[0].value.trim()) {
-                    // Salva 6 colonne se presenti, altrimenti 4
                     var obj = {
                         nome:   inp[0] ? inp[0].value : '',
                         fibraA: inp[1] ? inp[1].value : '',
                         fibraB: inp[2] ? inp[2].value : '',
                         nome2:  inp[3] ? inp[3].value : ''
                     };
-                    // Aggiungi stato e data se presenti (6 colonne)
                     if (inp[4]) obj.stato = inp[4].value;
                     if (inp[5]) obj.data = inp[5].value;
                     cavi.push(obj);
@@ -1089,10 +1154,20 @@
                 note:       (document.getElementById('nt_' + cardId) || {}).value || '',
                 foto:       Array.from(document.querySelectorAll('#fg_' + cardId + ' img')).map(function(i) { return i.src; })
             };
-            localStorage.setItem(k, JSON.stringify(dati));
+            
+            // Salva su localStorage + Google Sheets
+            salvasuSheets(cardId, k, dati);
+            
             var ok = document.getElementById('ok_' + cardId);
-            if (ok) { ok.style.display = 'block'; setTimeout(function() { ok.style.display = 'none'; }, 2500); }
+            if (ok) { 
+                ok.textContent = '✅ Salvato in locale e su Drive!';
+                ok.style.display = 'block'; 
+                setTimeout(function() { ok.style.display = 'none'; }, 2500); 
+            }
         }
+
+        // ── CONFIGURAZIONE GOOGLE SHEETS ──────────────────────
+        const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztC-AJ-_lze1KwsgaqKe-EqeF62EipZUihLMgtGkV0BoAlQAqwbv0HRdP7mjM3jIUPbw/exec';
 
         // ── BARCODE SCANNER ────────────────────────────────────
         var _scanStream = null;
