@@ -1072,19 +1072,20 @@
                 driveLinkCA: dati.driveLinkCA,
                 nfc: dati.nfc,
                 foto: dati.foto,
-                utente: 'Utente' // Puoi personalizzare con nome utente
+                utente: 'Utente'
             };
             
-            // Invia a Google Sheets
+            // Invia a Google Sheets (no-cors = funziona ma non vediamo la risposta)
             fetch(SHEETS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             }).then(function() {
-                console.log('✅ Salvato su Google Sheets');
+                // Con no-cors non possiamo leggere la risposta, ma il salvataggio funziona
+                console.log('✅ Inviato a Google Sheets (verifica sul foglio)');
             }).catch(function(err) {
-                console.log('⚠️ Errore Sheets, salvato solo in locale:', err);
+                console.log('⚠️ localStorage salvato, Sheets potrebbe non essere raggiungibile');
             });
         }
         
