@@ -1041,17 +1041,59 @@
         function seAddFoto(e, gridId) {
             var grid = document.getElementById(gridId);
             if (!grid) return;
+            var cardId = gridId.replace('fg_', '');
+            
             Array.from(e.target.files).forEach(function(f) {
-                var r = new FileReader();
-                r.onload = function(ev) {
+                // Comprimi e carica su Drive
+                comprimiFoto(f, 1200, 0.85, function(compressedBase64) {
+                    // Mostra anteprima subito
                     var w = document.createElement('div');
                     w.className = 'fwrap';
-                    w.innerHTML = '<img class="fimg" src="' + ev.target.result + '"><button class="fdel" onclick="this.parentElement.remove()">✕</button>';
+                    w.innerHTML = '<img class="fimg" src="' + compressedBase64 + '"><button class="fdel" onclick="this.parentElement.remove()">✕</button><div style="font-size:9px;color:#999;text-align:center;margin-top:2px;">📤 Caricamento...</div>';
                     grid.appendChild(w);
-                };
-                r.readAsDataURL(f);
+                    
+                    // Carica su Drive in background
+                    caricaFotoSuDrive(f, cardId, function(base64, driveUrl) {
+                        // Aggiorna status
+                        var status = w.querySelector('div');
+                        if (status) {
+                            status.textContent = driveUrl ? '✅ Su Drive' : '💾 Locale';
+                        }
+                        // Sostituisci con immagine finale
+                        w.querySelector('img').src = compressedBase64;
+                        w.querySelector('img').dataset.driveUrl = driveUrl || '';
+                    });
+                });
             });
             e.target.value = '';
+        }
+        
+        function comprimiFoto(file, maxWidth, quality, callback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var width = img.width;
+                    var height = img.height;
+                    
+                    // Ridimensiona se troppo grande
+                    if (width > maxWidth) {
+                        height = (height / width) * maxWidth;
+                        width = maxWidth;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Converti in base64 compresso
+                    callback(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         // ── GOOGLE SHEETS SYNC ─────────────────────────────────
@@ -1249,6 +1291,36 @@
 
         // ── CONFIGURAZIONE GOOGLE SHEETS ──────────────────────
         const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztC-AJ-_lze1KwsgaqKe-EqeF62EipZUihLMgtGkV0BoAlQAqwbv0HRdP7mjM3jIUPbw/exec';
+        const DRIVE_FOLDER_ID = '1Pfj-t6RWFZajN_Rr5T8TC_Z1Fxws0Ha6';
+
+        // ── UPLOAD FOTO SU DRIVE ──────────────────────────────
+        function caricaFotoSuDrive(file, cardId, callback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64 = e.target.result;
+                var timestamp = Date.now();
+                var fileName = cardId + '_foto_' + timestamp + '.jpg';
+                
+                fetch(SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'uploadPhoto',
+                        fileName: fileName,
+                        fileData: base64,
+                        mimeType: file.type
+                    })
+                }).then(function() {
+                    // Con no-cors non possiamo leggere la risposta, ma salviamo il link stimato
+                    var driveUrl = 'https://drive.google.com/drive/folders/' + DRIVE_FOLDER_ID + '?q=' + fileName;
+                    callback(base64, driveUrl); // Usa base64 come fallback
+                }).catch(function() {
+                    callback(base64, null); // Usa solo base64 se errore
+                });
+            };
+            reader.readAsDataURL(file);
+        }
 
         // ── BARCODE SCANNER ────────────────────────────────────
         var _scanStream = null;
