@@ -799,7 +799,10 @@
                             <div class="se-row">
                                 <div class="se-label">📷 Foto</div>
                                 <div class="fgrid" id="fg_${cardId}">${fotoImgs}</div>
-                                <button class="btn-af" onclick="event.stopPropagation(); document.getElementById('${fotoInputId}').click()">📷 Aggiungi foto</button>
+                                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                                    <button class="btn-af" onclick="event.stopPropagation(); document.getElementById('${fotoInputId}').click()" style="flex:1">📷 Da telefono</button>
+                                    <button class="btn-af" onclick="event.stopPropagation(); aggiungiLinkDrive('fg_${cardId}')" style="flex:1; background:#4285f4; color:white;">🔗 Link Drive</button>
+                                </div>
                                 <input type="file" id="${fotoInputId}" accept="image/*" multiple style="display:none"
                                     onchange="seAddFoto(event,'fg_${cardId}')">
                             </div>
@@ -1036,6 +1039,38 @@
                 '<td><input type="text" placeholder="Nome cavo B" value="' + (data && data.nome2 || '') + '"></td>' +
                 '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
             tbody.appendChild(tr);
+        }
+
+        function aggiungiLinkDrive(gridId) {
+            var link = prompt('📎 Incolla il link della foto da Google Drive:\n\n1. Carica la foto su Drive nella cartella "Foto Giunti Ottici"\n2. Tasto destro → Condividi → Chiunque con il link\n3. Copia link e incollalo qui');
+            
+            if (!link || !link.trim()) return;
+            
+            // Estrai ID file da link Drive
+            var fileId = '';
+            var match1 = link.match(/\/file\/d\/([^\/]+)/);
+            var match2 = link.match(/[?&]id=([^&]+)/);
+            
+            if (match1) fileId = match1[1];
+            else if (match2) fileId = match2[1];
+            else {
+                alert('❌ Link non valido. Usa un link di Google Drive.');
+                return;
+            }
+            
+            // Crea URL visualizzazione diretta
+            var imgUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+            
+            // Aggiungi alla griglia
+            var grid = document.getElementById(gridId);
+            if (!grid) return;
+            
+            var w = document.createElement('div');
+            w.className = 'fwrap';
+            w.innerHTML = '<img class="fimg" src="' + imgUrl + '" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E❌ Errore caricamento%3C/text%3E%3C/svg%3E\'"><button class="fdel" onclick="this.parentElement.remove()">✕</button><div style="font-size:8px;color:#4285f4;text-align:center;margin-top:2px;overflow:hidden;text-overflow:ellipsis;">🔗 Da Drive</div>';
+            grid.appendChild(w);
+            
+            alert('✅ Foto aggiunta! Ricorda di premere "💾 Salva dati"');
         }
 
         function seAddFoto(e, gridId) {
