@@ -1058,8 +1058,8 @@
                 return;
             }
             
-            // Crea URL visualizzazione diretta
-            var imgUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+            // IMPORTANTE: Usa thumbnail per evitare problemi CORS
+            var imgUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
             
             // Aggiungi alla griglia
             var grid = document.getElementById(gridId);
@@ -1067,10 +1067,10 @@
             
             var w = document.createElement('div');
             w.className = 'fwrap';
-            w.innerHTML = '<img class="fimg" src="' + imgUrl + '" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E❌ Errore caricamento%3C/text%3E%3C/svg%3E\'"><button class="fdel" onclick="this.parentElement.remove()">✕</button><div style="font-size:8px;color:#4285f4;text-align:center;margin-top:2px;overflow:hidden;text-overflow:ellipsis;">🔗 Da Drive</div>';
+            w.innerHTML = '<img class="fimg" src="' + imgUrl + '" data-drive-id="' + fileId + '" loading="lazy"><button class="fdel" onclick="this.parentElement.remove()">✕</button><div style="font-size:8px;color:#4285f4;text-align:center;margin-top:2px;">🔗 Drive</div>';
             grid.appendChild(w);
             
-            alert('✅ Foto aggiunta! Ricorda di premere "💾 Salva dati"');
+            alert('✅ Foto aggiunta da Drive! Premi "💾 Salva dati"');
         }
 
         function seAddFoto(e, gridId) {
