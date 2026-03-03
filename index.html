@@ -1523,22 +1523,37 @@
             }
             
             var link = linkInput.value.trim();
+            var downloadUrl = '';
+            
             // Converti link di condivisione in link download diretto
-            var fileId = '';
             
-            // Formato: https://drive.google.com/file/d/FILE_ID/view
-            var match1 = link.match(/\/file\/d\/([^\/]+)/);
-            // Formato: https://drive.google.com/open?id=FILE_ID
-            var match2 = link.match(/[?&]id=([^&]+)/);
-            
-            if (match1) fileId = match1[1];
-            else if (match2) fileId = match2[1];
-            else {
-                alert('❌ Link non valido. Usa un link di condivisione Google Drive.');
-                return;
+            // TIPO 1: Google Sheets
+            // https://docs.google.com/spreadsheets/d/FILE_ID/edit...
+            var sheetsMatch = link.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+            if (sheetsMatch) {
+                var fileId = sheetsMatch[1];
+                downloadUrl = 'https://docs.google.com/spreadsheets/d/' + fileId + '/export?format=xlsx';
             }
             
-            var downloadUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
+            // TIPO 2: File Excel su Drive
+            // https://drive.google.com/file/d/FILE_ID/view
+            var driveMatch = link.match(/\/file\/d\/([^\/]+)/);
+            if (driveMatch && !sheetsMatch) {
+                var fileId = driveMatch[1];
+                downloadUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
+            }
+            
+            // TIPO 3: Link con ?id=
+            var idMatch = link.match(/[?&]id=([^&]+)/);
+            if (idMatch && !sheetsMatch && !driveMatch) {
+                var fileId = idMatch[1];
+                downloadUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
+            }
+            
+            if (!downloadUrl) {
+                alert('❌ Link non valido. Usa un link di Google Drive o Google Sheets.');
+                return;
+            }
             
             // Scarica e importa
             fetch(downloadUrl)
@@ -1559,7 +1574,7 @@
                 }
             })
             .catch(function(err) {
-                alert('❌ Errore import Drive: ' + err.message);
+                alert('❌ Errore import Drive: ' + err.message + '\n\nVerifica che il file sia condiviso pubblicamente.');
             });
         }
         
