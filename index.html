@@ -738,6 +738,10 @@
                                 <div class="excel-btns">
                                     <button class="btn-xlsx-imp" onclick="event.stopPropagation(); document.getElementById('xl_${cardId}').click()" style="flex:1">📁 File locale</button>
                                     <button class="btn-xlsx-imp" onclick="event.stopPropagation(); importaDaDrive('cv_${cardId}','${cardId}')" style="flex:1">☁️ Da Drive</button>
+                                    <button onclick="event.stopPropagation(); cancellaTutto('cv_${cardId}', 'tbl_${cardId}')" 
+                                        style="flex:1; padding:6px; background:#ffebee; border:1.5px solid #ef5350; border-radius:8px; color:#c62828; font-size:11px; font-weight:700; cursor:pointer;">
+                                        🗑 Cancella tutto
+                                    </button>
                                     <input type="file" id="xl_${cardId}" accept=".xlsx,.xls" style="display:none" onchange="xlsxImporta(event,'cv_${cardId}')">
                                 </div>
                                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
@@ -779,6 +783,10 @@
                                 <div class="excel-btns">
                                     <button class="btn-xlsx-imp" onclick="event.stopPropagation(); document.getElementById('ca_xl_${cardId}').click()" style="flex:1">📁 File locale</button>
                                     <button class="btn-xlsx-imp" onclick="event.stopPropagation(); importaDaDrive('ca_${cardId}','${cardId}')" style="flex:1">☁️ Da Drive</button>
+                                    <button onclick="event.stopPropagation(); cancellaTutto('ca_${cardId}', 'ca_tbl_${cardId}')" 
+                                        style="flex:1; padding:6px; background:#ffebee; border:1.5px solid #ef5350; border-radius:8px; color:#c62828; font-size:11px; font-weight:700; cursor:pointer;">
+                                        🗑 Cancella tutto
+                                    </button>
                                     <input type="file" id="ca_xl_${cardId}" accept=".xlsx,.xls" style="display:none" onchange="caXlsxImporta(event,'ca_${cardId}')">
                                 </div>
                                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
@@ -1039,6 +1047,24 @@
                 '<td><input type="text" placeholder="Nome cavo B" value="' + (data && data.nome2 || '') + '"></td>' +
                 '<td><button class="btn-dr" onclick="this.closest(\'tr\').remove()">🗑</button></td>';
             tbody.appendChild(tr);
+        }
+
+        function cancellaTutto(tbodyId, tblId) {
+            if (!confirm('🗑️ Vuoi davvero cancellare tutte le righe?\n\nQuesta azione non può essere annullata.')) {
+                return;
+            }
+            
+            var tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+            
+            // Svuota tabella
+            tbody.innerHTML = '';
+            
+            // Nascondi tabella
+            var tbl = document.getElementById(tblId);
+            if (tbl) tbl.style.display = 'none';
+            
+            alert('✅ Tabella svuotata! Premi "💾 Salva dati" per confermare.');
         }
 
         function aggiungiLinkDrive(gridId) {
