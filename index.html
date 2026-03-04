@@ -852,15 +852,23 @@
         }
 
         function toggleFilter(circuit) {
-            if (activeFilters.has(circuit)) {
-                activeFilters.delete(circuit);
+            // Se clicco lo stesso circuito già attivo, lo deseleziono (mostra tutto)
+            if (activeFilters.has(circuit) && activeFilters.size === 1) {
+                activeFilters.clear();
+                document.querySelectorAll('.btn[data-c]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
             } else {
+                // Altrimenti SOSTITUISCO: deseleziono tutti e attivo solo questo
+                activeFilters.clear();
+                document.querySelectorAll('.btn[data-c]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
                 activeFilters.add(circuit);
+                document.querySelectorAll(`[data-c="${circuit}"]`).forEach(btn => {
+                    btn.classList.add('active');
+                });
             }
-            
-            document.querySelectorAll(`[data-c="${circuit}"]`).forEach(btn => {
-                btn.classList.toggle('active');
-            });
             
             render();
         }
