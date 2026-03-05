@@ -1559,6 +1559,7 @@
             
             var link = linkInput.value.trim();
             var downloadUrl = '';
+            var useProxy = false;
             
             // Converti link di condivisione in link download diretto
             
@@ -1568,6 +1569,7 @@
             if (sheetsMatch) {
                 var fileId = sheetsMatch[1];
                 downloadUrl = 'https://docs.google.com/spreadsheets/d/' + fileId + '/export?format=xlsx';
+                useProxy = true; // Google Sheets richiede proxy per CORS
             }
             
             // TIPO 2: File Excel su Drive
@@ -1590,8 +1592,23 @@
                 return;
             }
             
+            // Usa CORS proxy per Google Sheets (risolve problema PC)
+            // Provo con allorigins.win invece di corsproxy.io (più affidabile)
+            var fetchUrl = downloadUrl;
+            
+            if (useProxy) {
+                // AllOrigins proxy - più stabile
+                fetchUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(downloadUrl);
+            }
+            
+            // Mostra loader
+            var loadingMsg = alert('⏳ Caricamento in corso...');
+            
             // Scarica e importa
-            fetch(downloadUrl)
+            fetch(fetchUrl, { 
+                method: 'GET',
+                headers: useProxy ? {} : { 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+            })
             .then(function(res) {
                 if (!res.ok) throw new Error('File non accessibile - verifica che sia pubblico o condiviso');
                 return res.arrayBuffer();
@@ -1607,9 +1624,11 @@
                 } else if (tbodyId.startsWith('ca_')) {
                     importaCaviAttestati(tbodyId, rows);
                 }
+                
+                alert('✅ Import completato con successo!');
             })
             .catch(function(err) {
-                alert('❌ Errore import Drive: ' + err.message + '\n\nVerifica che il file sia condiviso pubblicamente.');
+                alert('❌ Errore import Drive: ' + err.message + '\n\nVerifica che il file sia condiviso pubblicamente.\n\nSe il problema persiste, usa "📁 File locale" invece di "☁️ Da Drive".');
             });
         }
         
