@@ -464,12 +464,70 @@
         </header>
         
         <div class="controls">
-            <div class="export-section" style="margin-bottom: 20px; display:flex; gap:8px;">
-                <button class="btn-kml" onclick="exportData()" style="flex:1">
+            <div class="export-section" style="margin-bottom: 20px; display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <button class="btn-kml" onclick="exportData()">
                     💾 Esporta CSV
                 </button>
-                <button class="btn-kml" onclick="apriDocs()" style="flex:1; background:linear-gradient(135deg,#2e7d32,#388e3c);">
+                <button class="btn-kml" onclick="apriDocs()" style="background:linear-gradient(135deg,#2e7d32,#388e3c);">
                     📄 Cerca Documenti
+                </button>
+                <button class="btn-kml" onclick="giuntiNonBonificati()" style="background:linear-gradient(135deg,#d32f2f,#f44336);">
+                    🔴 Giunto da Bonificare
+                </button>
+                <button class="btn-kml" onclick="giuntiBonificati()" style="background:linear-gradient(135deg,#1976d2,#2196f3);">
+                    ✅ Giunto Bonificato
+                </button>
+            </div>
+
+            <!-- PANNELLO GIUNTI DA BONIFICARE -->
+            <div id="panel-da-bonificare" style="display:none; margin-bottom:12px; background:#ffebee; border-radius:14px; padding:14px; border:2px solid #ef5350;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:13px; font-weight:700; color:#d32f2f; text-transform:uppercase; letter-spacing:.4px;">🔴 Giunti da Bonificare</span>
+                    <button onclick="giuntiNonBonificati()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#aaa;">✕</button>
+                </div>
+                
+                <div style="font-size:11px; color:#666; margin-bottom:10px;">
+                    Carica foto dei giunti in cattivo stato che necessitano di bonifica
+                </div>
+                
+                <button onclick="aggiungiFotoBonifica('da-bonificare')" 
+                    style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
+                    📷 Aggiungi Foto da Drive
+                </button>
+                
+                <div id="grid-da-bonificare" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; margin-bottom:12px;">
+                    <!-- Le foto verranno aggiunte qui -->
+                </div>
+                
+                <button onclick="salvaBonificaSuDrive()" 
+                    style="width:100%; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+                    💾 Salva Bonifica su Drive
+                </button>
+            </div>
+
+            <!-- PANNELLO GIUNTI BONIFICATI -->
+            <div id="panel-bonificati" style="display:none; margin-bottom:12px; background:#e3f2fd; border-radius:14px; padding:14px; border:2px solid #2196f3;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:13px; font-weight:700; color:#1976d2; text-transform:uppercase; letter-spacing:.4px;">✅ Giunti Bonificati</span>
+                    <button onclick="giuntiBonificati()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#aaa;">✕</button>
+                </div>
+                
+                <div style="font-size:11px; color:#666; margin-bottom:10px;">
+                    Carica foto dei giunti sistemati e bonificati
+                </div>
+                
+                <button onclick="aggiungiFotoBonifica('bonificati')" 
+                    style="width:100%; padding:10px; background:#1976d2; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
+                    📷 Aggiungi Foto da Drive
+                </button>
+                
+                <div id="grid-bonificati" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; margin-bottom:12px;">
+                    <!-- Le foto verranno aggiunte qui -->
+                </div>
+                
+                <button onclick="salvaBonificaSuDrive()" 
+                    style="width:100%; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+                    💾 Salva Bonifica su Drive
                 </button>
             </div>
 
@@ -627,6 +685,179 @@
         
         let data = [...originalData];
         let activeFilters = new Set();
+
+        function giuntiNonBonificati() {
+            var panel = document.getElementById('panel-da-bonificare');
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'block';
+                // Chiudi l'altro pannello
+                document.getElementById('panel-bonificati').style.display = 'none';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        function giuntiBonificati() {
+            var panel = document.getElementById('panel-bonificati');
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'block';
+                // Chiudi l'altro pannello
+                document.getElementById('panel-da-bonificare').style.display = 'none';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        function aggiungiFotoBonifica(tipo) {
+            var link = prompt('📎 Incolla il link della foto da Google Drive:\n\n1. Carica la foto su Drive nella cartella "Foto Giunti Ottici"\n2. Tasto destro → Condividi → Chiunque con il link\n3. Copia link e incollalo qui');
+            
+            if (!link || !link.trim()) return;
+            
+            // Estrai ID file
+            var fileId = '';
+            var match1 = link.match(/\/file\/d\/([^\/]+)/);
+            var match2 = link.match(/[?&]id=([^&]+)/);
+            
+            if (match1) fileId = match1[1];
+            else if (match2) fileId = match2[1];
+            else {
+                alert('❌ Link non valido. Usa un link di Google Drive.');
+                return;
+            }
+            
+            // Chiedi la data
+            var data = prompt('📅 Inserisci la data (es. 08/03/2026):', new Date().toLocaleDateString('it-IT'));
+            if (!data) data = new Date().toLocaleDateString('it-IT');
+            
+            // Crea URL visualizzazione
+            var imgUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+            
+            // Aggiungi alla griglia
+            var gridId = tipo === 'da-bonificare' ? 'grid-da-bonificare' : 'grid-bonificati';
+            var grid = document.getElementById(gridId);
+            
+            var fotoDiv = document.createElement('div');
+            fotoDiv.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
+            fotoDiv.innerHTML = `
+                <img src="${imgUrl}" style="width:100%; height:200px; object-fit:cover; display:block;">
+                <div style="padding:8px; background:#f5f6f8;">
+                    <div style="font-size:11px; color:#555; font-weight:600;">📅 ${data}</div>
+                </div>
+                <button onclick="this.parentElement.remove()" 
+                    style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
+                    ✕
+                </button>
+            `;
+            grid.appendChild(fotoDiv);
+            
+            // Salva su Drive (localStorage per ora)
+            salvaDatiBonifica();
+            
+            alert('✅ Foto aggiunta! Ricorda di salvare i dati del giunto.');
+        }
+        
+        function salvaBonificaSuDrive() {
+            // Raccogli tutte le foto da bonificare
+            var daBonificare = [];
+            document.querySelectorAll('#grid-da-bonificare > div').forEach(function(div) {
+                var img = div.querySelector('img');
+                var data = div.querySelector('div div').textContent.replace('📅 ', '');
+                daBonificare.push({ url: img.src, data: data });
+            });
+            
+            // Raccogli tutte le foto bonificati
+            var bonificati = [];
+            document.querySelectorAll('#grid-bonificati > div').forEach(function(div) {
+                var img = div.querySelector('img');
+                var data = div.querySelector('div div').textContent.replace('📅 ', '');
+                bonificati.push({ url: img.src, data: data });
+            });
+            
+            // Salva in localStorage
+            localStorage.setItem('foto_da_bonificare', JSON.stringify(daBonificare));
+            localStorage.setItem('foto_bonificati', JSON.stringify(bonificati));
+            
+            // Salva su Google Sheets
+            var payload = {
+                tipo: 'bonifica',
+                da_bonificare: daBonificare,
+                bonificati: bonificati,
+                data_salvataggio: new Date().toISOString(),
+                utente: 'Utente'
+            };
+            
+            fetch(SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(function() {
+                alert('✅ Bonifica salvata!\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto\n\nSalvato su Drive e in locale.');
+            }).catch(function(err) {
+                alert('✅ Salvato in locale!\n\n⚠️ Connessione Drive non disponibile, ma i dati sono al sicuro in locale.\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto');
+            });
+        }
+        
+        function salvaDatiBonifica() {
+            // Salva le foto bonifica in localStorage
+            var daBonificare = [];
+            document.querySelectorAll('#grid-da-bonificare > div').forEach(function(div) {
+                var img = div.querySelector('img');
+                var data = div.querySelector('div div').textContent.replace('📅 ', '');
+                daBonificare.push({ url: img.src, data: data });
+            });
+            
+            var bonificati = [];
+            document.querySelectorAll('#grid-bonificati > div').forEach(function(div) {
+                var img = div.querySelector('img');
+                var data = div.querySelector('div div').textContent.replace('📅 ', '');
+                bonificati.push({ url: img.src, data: data });
+            });
+            
+            localStorage.setItem('foto_da_bonificare', JSON.stringify(daBonificare));
+            localStorage.setItem('foto_bonificati', JSON.stringify(bonificati));
+        }
+        
+        function caricaDatiBonifica() {
+            // Carica le foto salvate all'avvio
+            var daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
+            var bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
+            
+            var gridDB = document.getElementById('grid-da-bonificare');
+            var gridB = document.getElementById('grid-bonificati');
+            
+            daBonificare.forEach(function(foto) {
+                var div = document.createElement('div');
+                div.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
+                div.innerHTML = `
+                    <img src="${foto.url}" style="width:100%; height:200px; object-fit:cover; display:block;">
+                    <div style="padding:8px; background:#f5f6f8;">
+                        <div style="font-size:11px; color:#555; font-weight:600;">📅 ${foto.data}</div>
+                    </div>
+                    <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
+                        style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
+                        ✕
+                    </button>
+                `;
+                gridDB.appendChild(div);
+            });
+            
+            bonificati.forEach(function(foto) {
+                var div = document.createElement('div');
+                div.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
+                div.innerHTML = `
+                    <img src="${foto.url}" style="width:100%; height:200px; object-fit:cover; display:block;">
+                    <div style="padding:8px; background:#f5f6f8;">
+                        <div style="font-size:11px; color:#555; font-weight:600;">📅 ${foto.data}</div>
+                    </div>
+                    <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
+                        style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
+                        ✕
+                    </button>
+                `;
+                gridB.appendChild(div);
+            });
+        }
 
         function exportData() {
             const query = document.getElementById('search').value.toLowerCase();
@@ -1590,7 +1821,7 @@
                 return;
             }
             
-            // Scarica e importa
+            // Scarica e importa (versione originale che funzionava)
             fetch(downloadUrl)
             .then(function(res) {
                 if (!res.ok) throw new Error('File non accessibile - verifica che sia pubblico o condiviso');
@@ -1607,6 +1838,8 @@
                 } else if (tbodyId.startsWith('ca_')) {
                     importaCaviAttestati(tbodyId, rows);
                 }
+                
+                alert('✅ Import completato con successo!');
             })
             .catch(function(err) {
                 alert('❌ Errore import Drive: ' + err.message + '\n\nVerifica che il file sia condiviso pubblicamente.');
@@ -1890,6 +2123,11 @@
             // Aggiorna visualizzazione
             render();
         }
+
+        // Carica foto bonifica all'avvio
+        document.addEventListener('DOMContentLoaded', function() {
+            caricaDatiBonifica();
+        });
 
 
         // ── DOCUMENTI ───────────────────────────────────────
