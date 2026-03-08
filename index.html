@@ -917,52 +917,138 @@
         }
         
         function caricaBonificaDaDrive() {
+            alert('⏳ Caricamento da Drive in corso...');
+            
             // Carica i dati bonifica da Google Sheets
             fetch(SHEETS_URL + '?tipo=bonifica')
             .then(function(res) { return res.json(); })
             .then(function(data) {
+                console.log('Dati ricevuti da Drive:', data);
+                
+                var daBonificare = [];
+                var bonificati = [];
+                
+                // Cerca i dati bonifica nelle righe restituite
                 if (data && data.length > 0) {
-                    // Trova i dati bonifica (dovrebbero essere nell'ultima riga o in una riga specifica)
-                    // Per ora usa localStorage come fallback
-                    var daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
-                    var bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
+                    // Cerca la riga con tipo='bonifica'
+                    var rigaBonifica = data.find(function(row) {
+                        return row.tipo === 'bonifica' || row.Tipo === 'bonifica';
+                    });
                     
-                    // Pulisci le griglie
-                    document.getElementById('grid-da-bonificare').innerHTML = '';
-                    document.getElementById('grid-bonificati').innerHTML = '';
-                    
-                    // Ricarica i dati
-                    caricaDatiBonifica();
-                    
-                    alert('✅ Dati caricati!\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto');
-                } else {
-                    // Usa localStorage
-                    caricaDatiBonifica();
-                    alert('📦 Caricati dati da memoria locale.\n\nSe hai salvato su Drive, verifica la connessione.');
+                    if (rigaBonifica) {
+                        // Prova a parsare i dati JSON
+                        try {
+                            if (rigaBonifica.da_bonificare) {
+                                daBonificare = typeof rigaBonifica.da_bonificare === 'string' 
+                                    ? JSON.parse(rigaBonifica.da_bonificare) 
+                                    : rigaBonifica.da_bonificare;
+                            }
+                            if (rigaBonifica.bonificati) {
+                                bonificati = typeof rigaBonifica.bonificati === 'string' 
+                                    ? JSON.parse(rigaBonifica.bonificati) 
+                                    : rigaBonifica.bonificati;
+                            }
+                        } catch(e) {
+                            console.error('Errore parsing JSON:', e);
+                        }
+                    }
                 }
+                
+                // Se non trovato su Drive, usa localStorage
+                if (daBonificare.length === 0 && bonificati.length === 0) {
+                    daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
+                    bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
+                    
+                    if (daBonificare.length === 0 && bonificati.length === 0) {
+                        alert('📦 Nessuna foto salvata trovata.\n\nAggiungi foto e salvale con "💾 Salva su Drive".');
+                        return;
+                    }
+                    
+                    alert('📦 Caricati dati da memoria locale.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                } else {
+                    // Salva in localStorage per cache
+                    localStorage.setItem('foto_da_bonificare', JSON.stringify(daBonificare));
+                    localStorage.setItem('foto_bonificati', JSON.stringify(bonificati));
+                    
+                    alert('✅ Caricati dati da Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                }
+                
+                // Pulisci le griglie
+                document.getElementById('grid-da-bonificare').innerHTML = '';
+                document.getElementById('grid-bonificati').innerHTML = '';
+                
+                // Ricrea le foto
+                var gridDB = document.getElementById('grid-da-bonificare');
+                var gridB = document.getElementById('grid-bonificati');
+                
+                daBonificare.forEach(function(foto) {
+                    ricreaFotoBonifica(foto, gridDB);
+                });
+                
+                bonificati.forEach(function(foto) {
+                    ricreaFotoBonifica(foto, gridB);
+                });
+                
             })
-            .catch(function() {
-                // Se errore, usa localStorage
-                caricaDatiBonifica();
-                alert('📦 Caricati dati da memoria locale.\n\n⚠️ Connessione Drive non disponibile.');
+            .catch(function(err) {
+                console.error('Errore caricamento Drive:', err);
+                
+                // Fallback a localStorage
+                var daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
+                var bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
+                
+                // Pulisci e ricarica
+                document.getElementById('grid-da-bonificare').innerHTML = '';
+                document.getElementById('grid-bonificati').innerHTML = '';
+                
+                var gridDB = document.getElementById('grid-da-bonificare');
+                var gridB = document.getElementById('grid-bonificati');
+                
+                daBonificare.forEach(function(foto) {
+                    ricreaFotoBonifica(foto, gridDB);
+                });
+                
+                bonificati.forEach(function(foto) {
+                    ricreaFotoBonifica(foto, gridB);
+                });
+                
+                alert('📦 Caricati dati da memoria locale.\n\n⚠️ Connessione Drive non disponibile.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
             });
         }
         
         function salvaBonificaSuDrive() {
-            // Raccogli tutte le foto da bonificare
+            // Raccogli tutte le foto da bonificare con TUTTI i dati
             var daBonificare = [];
             document.querySelectorAll('#grid-da-bonificare > div').forEach(function(div) {
                 var img = div.querySelector('img');
-                var data = div.querySelector('div div').textContent.replace('📅 ', '');
-                daBonificare.push({ url: img.src, data: data });
+                if (!img) return;
+                
+                daBonificare.push({
+                    imgUrl: div.dataset.imgUrl || img.src,
+                    nome: div.dataset.nome || '',
+                    data: div.dataset.data || '',
+                    giuntoNome: div.dataset.giuntoNome || '',
+                    giuntoLat: div.dataset.giuntoLat || '',
+                    giuntoLon: div.dataset.giuntoLon || '',
+                    giuntoIndirizzo: div.dataset.giuntoIndirizzo || ''
+                });
             });
             
-            // Raccogli tutte le foto bonificati
+            // Raccogli tutte le foto bonificati con TUTTI i dati
             var bonificati = [];
             document.querySelectorAll('#grid-bonificati > div').forEach(function(div) {
                 var img = div.querySelector('img');
-                var data = div.querySelector('div div').textContent.replace('📅 ', '');
-                bonificati.push({ url: img.src, data: data });
+                if (!img) return;
+                
+                bonificati.push({
+                    imgUrl: div.dataset.imgUrl || img.src,
+                    nome: div.dataset.nome || '',
+                    data: div.dataset.data || '',
+                    giuntoNome: div.dataset.giuntoNome || '',
+                    giuntoLat: div.dataset.giuntoLat || '',
+                    giuntoLon: div.dataset.giuntoLon || '',
+                    giuntoIndirizzo: div.dataset.giuntoIndirizzo || ''
+                });
             });
             
             // Salva in localStorage
@@ -972,8 +1058,8 @@
             // Salva su Google Sheets
             var payload = {
                 tipo: 'bonifica',
-                da_bonificare: daBonificare,
-                bonificati: bonificati,
+                da_bonificare: JSON.stringify(daBonificare),
+                bonificati: JSON.stringify(bonificati),
                 data_salvataggio: new Date().toISOString(),
                 utente: 'Utente'
             };
@@ -984,30 +1070,50 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             }).then(function() {
-                alert('✅ Bonifica salvata!\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto\n\nSalvato su Drive e in locale.');
+                alert('✅ Bonifica salvata su Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto\n\nI tuoi colleghi potranno caricarle con "📥 Carica da Drive".');
             }).catch(function(err) {
-                alert('✅ Salvato in locale!\n\n⚠️ Connessione Drive non disponibile, ma i dati sono al sicuro in locale.\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto');
+                alert('✅ Salvato in locale!\n\n⚠️ Connessione Drive non disponibile.\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto');
             });
         }
         
         function salvaDatiBonifica() {
-            // Salva le foto bonifica in localStorage
+            // Salva le foto bonifica in localStorage con TUTTI i dati
             var daBonificare = [];
             document.querySelectorAll('#grid-da-bonificare > div').forEach(function(div) {
                 var img = div.querySelector('img');
-                var data = div.querySelector('div div').textContent.replace('📅 ', '');
-                daBonificare.push({ url: img.src, data: data });
+                if (!img) return;
+                
+                daBonificare.push({
+                    imgUrl: div.dataset.imgUrl || img.src,
+                    nome: div.dataset.nome || '',
+                    data: div.dataset.data || '',
+                    giuntoNome: div.dataset.giuntoNome || '',
+                    giuntoLat: div.dataset.giuntoLat || '',
+                    giuntoLon: div.dataset.giuntoLon || '',
+                    giuntoIndirizzo: div.dataset.giuntoIndirizzo || ''
+                });
             });
             
             var bonificati = [];
             document.querySelectorAll('#grid-bonificati > div').forEach(function(div) {
                 var img = div.querySelector('img');
-                var data = div.querySelector('div div').textContent.replace('📅 ', '');
-                bonificati.push({ url: img.src, data: data });
+                if (!img) return;
+                
+                bonificati.push({
+                    imgUrl: div.dataset.imgUrl || img.src,
+                    nome: div.dataset.nome || '',
+                    data: div.dataset.data || '',
+                    giuntoNome: div.dataset.giuntoNome || '',
+                    giuntoLat: div.dataset.giuntoLat || '',
+                    giuntoLon: div.dataset.giuntoLon || '',
+                    giuntoIndirizzo: div.dataset.giuntoIndirizzo || ''
+                });
             });
             
             localStorage.setItem('foto_da_bonificare', JSON.stringify(daBonificare));
             localStorage.setItem('foto_bonificati', JSON.stringify(bonificati));
+            
+            console.log('Salvati bonifica - Da bonificare:', daBonificare.length, 'Bonificati:', bonificati.length);
         }
         
         function caricaDatiBonifica() {
@@ -1015,40 +1121,69 @@
             var daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
             var bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
             
+            console.log('Caricamento bonifica - Da bonificare:', daBonificare.length, 'Bonificati:', bonificati.length);
+            
             var gridDB = document.getElementById('grid-da-bonificare');
             var gridB = document.getElementById('grid-bonificati');
             
+            if (!gridDB || !gridB) return;
+            
+            // Carica foto da bonificare
             daBonificare.forEach(function(foto) {
-                var div = document.createElement('div');
-                div.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
-                div.innerHTML = `
-                    <img src="${foto.url}" style="width:100%; height:200px; object-fit:cover; display:block;">
-                    <div style="padding:8px; background:#f5f6f8;">
-                        <div style="font-size:11px; color:#555; font-weight:600;">📅 ${foto.data}</div>
-                    </div>
-                    <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
-                        style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
-                        ✕
-                    </button>
-                `;
-                gridDB.appendChild(div);
+                ricreaFotoBonifica(foto, gridDB);
             });
             
+            // Carica foto bonificati
             bonificati.forEach(function(foto) {
-                var div = document.createElement('div');
-                div.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
-                div.innerHTML = `
-                    <img src="${foto.url}" style="width:100%; height:200px; object-fit:cover; display:block;">
-                    <div style="padding:8px; background:#f5f6f8;">
-                        <div style="font-size:11px; color:#555; font-weight:600;">📅 ${foto.data}</div>
-                    </div>
-                    <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
-                        style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
-                        ✕
-                    </button>
-                `;
-                gridB.appendChild(div);
+                ricreaFotoBonifica(foto, gridB);
             });
+        }
+        
+        function ricreaFotoBonifica(foto, grid) {
+            var fotoId = 'foto_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            var fotoDiv = document.createElement('div');
+            fotoDiv.id = fotoId;
+            fotoDiv.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
+            
+            // Salva tutti i dataset
+            fotoDiv.dataset.nome = foto.nome || '';
+            fotoDiv.dataset.data = foto.data || '';
+            fotoDiv.dataset.imgUrl = foto.imgUrl || '';
+            fotoDiv.dataset.giuntoNome = foto.giuntoNome || '';
+            fotoDiv.dataset.giuntoLat = foto.giuntoLat || '';
+            fotoDiv.dataset.giuntoLon = foto.giuntoLon || '';
+            fotoDiv.dataset.giuntoIndirizzo = foto.giuntoIndirizzo || '';
+            
+            // Crea HTML
+            var hasGiunto = foto.giuntoNome && foto.giuntoLat && foto.giuntoLon;
+            var nomeClean = (foto.giuntoNome || '').replace(/[📍🔴✅]/g, '').trim();
+            
+            var infoHTML = hasGiunto 
+                ? `📍 ${nomeClean}<br><span style="font-size:9px; color:#666;">📍 ${parseFloat(foto.giuntoLat).toFixed(5)}, ${parseFloat(foto.giuntoLon).toFixed(5)}</span>`
+                : `📝 ${foto.nome || 'Foto'}`;
+            
+            var borderStyle = hasGiunto ? 'border-color:#4caf50; border-width:3px;' : '';
+            
+            fotoDiv.innerHTML = `
+                <img src="${foto.imgUrl}" style="width:100%; height:200px; object-fit:cover; display:block; cursor:pointer; ${borderStyle}" onclick="apriFotoBonifica('${fotoId}')">
+                <div style="padding:8px; background:#f5f6f8;">
+                    <div id="${fotoId}_info" style="font-size:10px; color:#333; font-weight:700; margin-bottom:3px;">
+                        ${infoHTML}
+                    </div>
+                    <div style="font-size:11px; color:#555; font-weight:600; margin-bottom:6px;">📅 ${foto.data}</div>
+                    <button onclick="cercaGiuntoPerFoto('${fotoId}')" 
+                        style="width:100%; padding:6px; background:#2196f3; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
+                        🔍 Cerca Giunto
+                    </button>
+                </div>
+                <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
+                    style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold; z-index:10;">
+                    ✕
+                </button>
+            `;
+            
+            grid.appendChild(fotoDiv);
         }
 
         function exportData() {
