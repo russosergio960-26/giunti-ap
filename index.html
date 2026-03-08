@@ -491,7 +491,7 @@
                 </div>
                 
                 <button onclick="aggiungiFotoBonifica('da-bonificare')" 
-                    style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
+                    style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:8px;">
                     📷 Aggiungi Foto da Drive
                 </button>
                 
@@ -499,10 +499,16 @@
                     <!-- Le foto verranno aggiunte qui -->
                 </div>
                 
-                <button onclick="salvaBonificaSuDrive()" 
-                    style="width:100%; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
-                    💾 Salva Bonifica su Drive
-                </button>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="caricaBonificaDaDrive()" 
+                        style="flex:1; padding:10px; background:#4caf50; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                        📥 Carica da Drive
+                    </button>
+                    <button onclick="salvaBonificaSuDrive()" 
+                        style="flex:1; padding:10px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+                        💾 Salva su Drive
+                    </button>
+                </div>
             </div>
 
             <!-- PANNELLO GIUNTI BONIFICATI -->
@@ -517,7 +523,7 @@
                 </div>
                 
                 <button onclick="aggiungiFotoBonifica('bonificati')" 
-                    style="width:100%; padding:10px; background:#1976d2; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
+                    style="width:100%; padding:10px; background:#1976d2; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:8px;">
                     📷 Aggiungi Foto da Drive
                 </button>
                 
@@ -525,10 +531,16 @@
                     <!-- Le foto verranno aggiunte qui -->
                 </div>
                 
-                <button onclick="salvaBonificaSuDrive()" 
-                    style="width:100%; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
-                    💾 Salva Bonifica su Drive
-                </button>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="caricaBonificaDaDrive()" 
+                        style="flex:1; padding:10px; background:#4caf50; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                        📥 Carica da Drive
+                    </button>
+                    <button onclick="salvaBonificaSuDrive()" 
+                        style="flex:1; padding:10px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+                        💾 Salva su Drive
+                    </button>
+                </div>
             </div>
 
             <!-- PANNELLO DOCUMENTI -->
@@ -754,6 +766,38 @@
             salvaDatiBonifica();
             
             alert('✅ Foto aggiunta! Ricorda di salvare i dati del giunto.');
+        }
+        
+        function caricaBonificaDaDrive() {
+            // Carica i dati bonifica da Google Sheets
+            fetch(SHEETS_URL + '?tipo=bonifica')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.length > 0) {
+                    // Trova i dati bonifica (dovrebbero essere nell'ultima riga o in una riga specifica)
+                    // Per ora usa localStorage come fallback
+                    var daBonificare = JSON.parse(localStorage.getItem('foto_da_bonificare') || '[]');
+                    var bonificati = JSON.parse(localStorage.getItem('foto_bonificati') || '[]');
+                    
+                    // Pulisci le griglie
+                    document.getElementById('grid-da-bonificare').innerHTML = '';
+                    document.getElementById('grid-bonificati').innerHTML = '';
+                    
+                    // Ricarica i dati
+                    caricaDatiBonifica();
+                    
+                    alert('✅ Dati caricati!\n\n🔴 Da bonificare: ' + daBonificare.length + ' foto\n✅ Bonificati: ' + bonificati.length + ' foto');
+                } else {
+                    // Usa localStorage
+                    caricaDatiBonifica();
+                    alert('📦 Caricati dati da memoria locale.\n\nSe hai salvato su Drive, verifica la connessione.');
+                }
+            })
+            .catch(function() {
+                // Se errore, usa localStorage
+                caricaDatiBonifica();
+                alert('📦 Caricati dati da memoria locale.\n\n⚠️ Connessione Drive non disponibile.');
+            });
         }
         
         function salvaBonificaSuDrive() {
