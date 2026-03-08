@@ -737,6 +737,10 @@
                 return;
             }
             
+            // Chiedi nome
+            var nome = prompt('📝 Inserisci un nome/descrizione per questa foto:', 'Giunto');
+            if (!nome) nome = 'Giunto';
+            
             // Chiedi la data
             var data = prompt('📅 Inserisci la data (es. 08/03/2026):', new Date().toLocaleDateString('it-IT'));
             if (!data) data = new Date().toLocaleDateString('it-IT');
@@ -748,24 +752,168 @@
             var gridId = tipo === 'da-bonificare' ? 'grid-da-bonificare' : 'grid-bonificati';
             var grid = document.getElementById(gridId);
             
+            var fotoId = 'foto_' + Date.now();
+            
             var fotoDiv = document.createElement('div');
+            fotoDiv.id = fotoId;
             fotoDiv.style.cssText = 'position:relative; border:2px solid #ddd; border-radius:8px; overflow:hidden; background:white;';
+            fotoDiv.dataset.nome = nome;
+            fotoDiv.dataset.data = data;
+            fotoDiv.dataset.imgUrl = imgUrl;
+            
             fotoDiv.innerHTML = `
-                <img src="${imgUrl}" style="width:100%; height:200px; object-fit:cover; display:block;">
+                <img src="${imgUrl}" style="width:100%; height:200px; object-fit:cover; display:block; cursor:pointer;" onclick="apriFotoBonifica('${fotoId}')">
                 <div style="padding:8px; background:#f5f6f8;">
-                    <div style="font-size:11px; color:#555; font-weight:600;">📅 ${data}</div>
+                    <div id="${fotoId}_info" style="font-size:10px; color:#333; font-weight:700; margin-bottom:3px;">
+                        📝 ${nome}
+                    </div>
+                    <div style="font-size:11px; color:#555; font-weight:600; margin-bottom:6px;">📅 ${data}</div>
+                    <button onclick="cercaGiuntoPerFoto('${fotoId}')" 
+                        style="width:100%; padding:6px; background:#2196f3; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
+                        🔍 Cerca Giunto
+                    </button>
                 </div>
-                <button onclick="this.parentElement.remove()" 
-                    style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">
+                <button onclick="this.parentElement.remove(); salvaDatiBonifica();" 
+                    style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.8); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold; z-index:10;">
                     ✕
                 </button>
             `;
             grid.appendChild(fotoDiv);
             
-            // Salva su Drive (localStorage per ora)
+            // Salva
             salvaDatiBonifica();
             
-            alert('✅ Foto aggiunta! Ricorda di salvare i dati del giunto.');
+            alert('✅ Foto aggiunta!\n\nClicca "🔍 Cerca Giunto" per associarla a un giunto specifico.');
+        }
+        
+        function cercaGiuntoPerFoto(fotoId) {
+            var fotoDiv = document.getElementById(fotoId);
+            if (!fotoDiv) return;
+            
+            // Mostra campo ricerca
+            var ricerca = prompt('🔍 Cerca giunto per nome o indirizzo:\n\nEsempi: Galvani, Stadio, Via Roma, Bologna\n\n(Totale giunti disponibili: ' + originalData.length + ')');
+            if (!ricerca || !ricerca.trim()) return;
+            
+            ricerca = ricerca.toLowerCase().trim();
+            
+            // Cerca nei giunti (cerca in nome E indirizzo)
+            var trovati = originalData.filter(function(g) {
+                var nome = (g.n || '').toLowerCase();
+                var indirizzo = (g.a || '').toLowerCase();
+                var circuito = (g.c || '').toLowerCase();
+                
+                // Rimuovi emoji dal nome
+                nome = nome.replace(/[^\w\s-\/]/gi, '');
+                
+                return nome.includes(ricerca) || 
+                       indirizzo.includes(ricerca) || 
+                       circuito.includes(ricerca);
+            });
+            
+            console.log('Ricerca: "' + ricerca + '" - Trovati: ' + trovati.length + ' giunti');
+            
+            if (trovati.length === 0) {
+                alert('❌ Nessun giunto trovato con: "' + ricerca + '"\n\nProva con:\n- Nome del giunto (es. Galvani, Stadio)\n- Indirizzo (es. Via Roma, Bologna)\n- Circuito (es. galvani, fe-centro)\n\nTotale giunti: ' + originalData.length);
+                return;
+            }
+            
+            // Se più di uno, mostra lista
+            var giunto;
+            if (trovati.length === 1) {
+                giunto = trovati[0];
+            } else {
+                var lista = '✅ Trovati ' + trovati.length + ' giunti:\n\n';
+                trovati.slice(0, 10).forEach(function(g, i) {
+                    var nomeCorto = g.n.replace(/[📍🔴✅]/g, '').substring(0, 30);
+                    var indirizzoCorto = (g.a || 'N/D').substring(0, 25);
+                    lista += (i + 1) + '. ' + nomeCorto + '\n   ' + indirizzoCorto + '\n\n';
+                });
+                
+                if (trovati.length > 10) {
+                    lista += '... e altri ' + (trovati.length - 10) + ' giunti\n\n';
+                }
+                
+                var scelta = prompt(lista + 'Digita il numero del giunto (1-' + Math.min(10, trovati.length) + '):');
+                if (!scelta) return;
+                
+                var idx = parseInt(scelta) - 1;
+                
+                if (idx >= 0 && idx < Math.min(10, trovati.length)) {
+                    giunto = trovati[idx];
+                } else {
+                    alert('❌ Numero non valido');
+                    return;
+                }
+            }
+            
+            // Associa giunto alla foto
+            fotoDiv.dataset.giuntoNome = giunto.n;
+            fotoDiv.dataset.giuntoLat = giunto.lat;
+            fotoDiv.dataset.giuntoLon = giunto.lon;
+            fotoDiv.dataset.giuntoIndirizzo = giunto.a;
+            
+            // Aggiorna visualizzazione
+            var infoDiv = document.getElementById(fotoId + '_info');
+            var nomeClean = giunto.n.replace(/[📍🔴✅]/g, '').trim();
+            infoDiv.innerHTML = `
+                📍 ${nomeClean}<br>
+                <span style="font-size:9px; color:#666;">📍 ${giunto.lat.toFixed(5)}, ${giunto.lon.toFixed(5)}</span>
+            `;
+            
+            // Rendi immagine cliccabile per aprire giunto
+            var img = fotoDiv.querySelector('img');
+            img.style.cursor = 'pointer';
+            img.style.borderColor = '#4caf50';
+            img.style.borderWidth = '3px';
+            
+            // Salva
+            salvaDatiBonifica();
+            
+            alert('✅ Giunto associato!\n\n📍 ' + nomeClean + '\n📌 ' + (giunto.a || 'N/D') + '\n📍 ' + giunto.lat.toFixed(5) + ', ' + giunto.lon.toFixed(5) + '\n\n👆 Clicca sulla foto per aprire il giunto sulla mappa.');
+        }
+        
+        function apriFotoBonifica(fotoId) {
+            var fotoDiv = document.getElementById(fotoId);
+            if (!fotoDiv) return;
+            
+            var lat = parseFloat(fotoDiv.dataset.giuntoLat);
+            var lon = parseFloat(fotoDiv.dataset.giuntoLon);
+            var nome = fotoDiv.dataset.giuntoNome || 'Giunto';
+            
+            if (!lat || !lon) {
+                alert('⚠️ Nessun giunto associato a questa foto.\n\nClicca "🔍 Cerca Giunto" per associarla prima.');
+                return;
+            }
+            
+            // Apri Google Maps con navigazione
+            var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
+            window.open(mapsUrl, '_blank');
+            
+            // Mostra conferma
+            var nomeClean = nome.replace(/[📍🔴✅]/g, '').trim();
+            // Opzionale: mostra anche sulla mappa interna
+            if (confirm('🗺️ Navigazione avviata verso:\n\n📍 ' + nomeClean + '\n📍 ' + lat.toFixed(5) + ', ' + lon.toFixed(5) + '\n\nVuoi anche vedere il giunto sulla mappa interna?')) {
+                // Chiudi pannelli bonifica
+                document.getElementById('panel-da-bonificare').style.display = 'none';
+                document.getElementById('panel-bonificati').style.display = 'none';
+                
+                // Centra mappa interna
+                if (window.map) {
+                    window.map.setView([lat, lon], 16);
+                }
+                
+                // Ricarica e apri giunto
+                render();
+                setTimeout(function() {
+                    Object.values(window.markers || {}).forEach(function(marker) {
+                        var mLat = marker.getLatLng().lat;
+                        var mLon = marker.getLatLng().lng;
+                        if (Math.abs(mLat - lat) < 0.00001 && Math.abs(mLon - lon) < 0.00001) {
+                            marker.fire('click');
+                        }
+                    });
+                }, 500);
+            }
         }
         
         function caricaBonificaDaDrive() {
@@ -1106,6 +1254,16 @@
                             <div class="sv-ok" id="ok_${cardId}">✅ Dati salvati!</div>
                         </div>
                     `;
+                    
+                    // Salva giunto corrente per le bonifiche
+                    card.addEventListener('click', function() {
+                        window.currentGiunto = {
+                            nome: d.n,
+                            lat: d.lat,
+                            lon: d.lon,
+                            indirizzo: d.a
+                        };
+                    });
                     
                     card.onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${d.lat},${d.lon}`, '_blank');
                     resultsDiv.appendChild(card);
