@@ -492,7 +492,7 @@
                 
                 <!-- Barra ricerca -->
                 <input type="text" id="search-bonifica-da-bonificare" placeholder="🔍 Cerca giunto (nome, indirizzo, circuito)..." 
-                    onkeyup="cercaGiuntoBonifica('da-bonificare')"
+                    oninput="cercaGiuntoBonifica('da-bonificare')"
                     style="width:100%; padding:10px; border:1.5px solid #ddd; border-radius:8px; font-size:12px; margin-bottom:10px; outline:none;">
                 
                 <!-- Selettore giunti -->
@@ -541,7 +541,7 @@
                 
                 <!-- Barra ricerca -->
                 <input type="text" id="search-bonifica-bonificati" placeholder="🔍 Cerca giunto (nome, indirizzo, circuito)..." 
-                    onkeyup="cercaGiuntoBonifica('bonificati')"
+                    oninput="cercaGiuntoBonifica('bonificati')"
                     style="width:100%; padding:10px; border:1.5px solid #ddd; border-radius:8px; font-size:12px; margin-bottom:10px; outline:none;">
                 
                 <!-- Selettore giunti -->
@@ -802,20 +802,36 @@
                     count++;
                 }
             });
+            
+            // Seleziona automaticamente la prima opzione (aiuta su mobile)
+            if (select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
         }
         
         function aggiungiGiuntoBonifica(tipo) {
             var selectId = 'select-bonifica-' + tipo;
             var select = document.getElementById(selectId);
             
-            if (!select || select.selectedIndex === -1) {
+            if (!select) {
+                alert('⚠️ Errore: lista giunti non trovata!');
+                return;
+            }
+            
+            // Se non c'è selezione ma c'è almeno un'opzione, seleziona la prima
+            if (select.selectedIndex === -1 && select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
+            
+            if (select.selectedIndex === -1) {
                 alert('⚠️ Seleziona un giunto dalla lista!');
                 return;
             }
             
             var option = select.options[select.selectedIndex];
-            if (option.style.display === 'none') {
-                alert('⚠️ Il giunto è filtrato!');
+            
+            if (!option || !option.value) {
+                alert('⚠️ Giunto non valido!');
                 return;
             }
             
@@ -836,6 +852,9 @@
             
             lista.appendChild(item);
             salvaListaBonifica();
+            
+            // Feedback visivo
+            alert('✅ Giunto aggiunto: ' + giuntoData.nome);
         }
         
         function rimuoviGiuntoBonifica(itemId) {
