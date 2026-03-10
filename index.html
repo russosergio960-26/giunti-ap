@@ -893,6 +893,175 @@
             localStorage.setItem('bonifica_bonificati', JSON.stringify(bonificati));
         }
         
+        function salvaListaBonificaSuDrive() {
+            // Raccogli dati
+            var daBonificare = [];
+            document.querySelectorAll('#lista-bonifica-da-bonificare > div').forEach(function(item) {
+                daBonificare.push({
+                    nome: item.dataset.nome,
+                    lat: parseFloat(item.dataset.lat),
+                    lon: parseFloat(item.dataset.lon)
+                });
+            });
+            
+            var bonificati = [];
+            document.querySelectorAll('#lista-bonifica-bonificati > div').forEach(function(item) {
+                bonificati.push({
+                    nome: item.dataset.nome,
+                    lat: parseFloat(item.dataset.lat),
+                    lon: parseFloat(item.dataset.lon)
+                });
+            });
+            
+            // Salva locale
+            localStorage.setItem('bonifica_da_bonificare', JSON.stringify(daBonificare));
+            localStorage.setItem('bonifica_bonificati', JSON.stringify(bonificati));
+            
+            // Prepara payload per Google Sheets
+            var payload = {
+                action: 'salvaBonifiche',
+                da_bonificare: JSON.stringify(daBonificare),
+                bonificati: JSON.stringify(bonificati),
+                timestamp: new Date().toISOString()
+            };
+            
+            // Invia a Google Sheets
+            fetch(SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(function() {
+                alert('✅ Liste bonifiche salvate su Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length + '\n\nI tuoi colleghi potranno vederle con "📥 Carica da Drive"');
+            }).catch(function(err) {
+                alert('✅ Salvato in locale!\n\n⚠️ Drive non raggiungibile, ma i dati sono al sicuro in locale.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+            });
+        }
+        
+        function caricaListaBonificaDaDrive() {
+            alert('⏳ Caricamento da Drive...');
+            
+            // Carica da Google Sheets
+            fetch(SHEETS_URL + '?action=caricaBonifiche')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                console.log('Dati ricevuti da Drive:', data);
+                
+                var daBonificare = [];
+                var bonificati = [];
+                
+                if (data && data.da_bonificare) {
+                    try {
+                        daBonificare = typeof data.da_bonificare === 'string' 
+                            ? JSON.parse(data.da_bonificare) 
+                            : data.da_bonificare;
+                    } catch(e) {
+                        console.error('Errore parsing da_bonificare:', e);
+                    }
+                }
+                
+                if (data && data.bonificati) {
+                    try {
+                        bonificati = typeof data.bonificati === 'string' 
+                            ? JSON.parse(data.bonificati) 
+                            : data.bonificati;
+                    } catch(e) {
+                        console.error('Errore parsing bonificati:', e);
+                    }
+                }
+                
+                // Se non trovato su Drive, usa localStorage
+                if (daBonificare.length === 0 && bonificati.length === 0) {
+                    daBonificare = JSON.parse(localStorage.getItem('bonifica_da_bonificare') || '[]');
+                    bonificati = JSON.parse(localStorage.getItem('bonifica_bonificati') || '[]');
+                    
+                    alert('📦 Caricati dati da memoria locale.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                } else {
+                    // Salva in localStorage per cache
+                    localStorage.setItem('bonifica_da_bonificare', JSON.stringify(daBonificare));
+                    localStorage.setItem('bonifica_bonificati', JSON.stringify(bonificati));
+                    
+                    alert('✅ Caricati dati da Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                }
+                
+                // Pulisci e ricarica le liste
+                document.getElementById('lista-bonifica-da-bonificare').innerHTML = '';
+                document.getElementById('lista-bonifica-bonificati').innerHTML = '';
+                
+                // Ricrea giunti nella lista da bonificare
+                daBonificare.forEach(function(giuntoData) {
+                    var itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    var item = document.createElement('div');
+                    item.id = itemId;
+                    item.style.cssText = 'background:white; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px;';
+                    item.dataset.nome = giuntoData.nome;
+                    item.dataset.lat = giuntoData.lat;
+                    item.dataset.lon = giuntoData.lon;
+                    
+                    item.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1;"><div style="font-size:12px; font-weight:700; color:#333; margin-bottom:4px;">' + giuntoData.nome + '</div><div onclick="apriNavigazioneBonifica(' + giuntoData.lat + ', ' + giuntoData.lon + ', \'' + giuntoData.nome.replace(/'/g, "\\'") + '\')" style="font-size:11px; color:#1976d2; cursor:pointer; text-decoration:underline;">📍 ' + giuntoData.lat.toFixed(5) + ', ' + giuntoData.lon.toFixed(5) + ' → Naviga</div></div><button onclick="rimuoviGiuntoBonifica(\'' + itemId + '\')" style="background:#f44336; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button></div>';
+                    
+                    document.getElementById('lista-bonifica-da-bonificare').appendChild(item);
+                });
+                
+                // Ricrea giunti nella lista bonificati
+                bonificati.forEach(function(giuntoData) {
+                    var itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    var item = document.createElement('div');
+                    item.id = itemId;
+                    item.style.cssText = 'background:white; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px;';
+                    item.dataset.nome = giuntoData.nome;
+                    item.dataset.lat = giuntoData.lat;
+                    item.dataset.lon = giuntoData.lon;
+                    
+                    item.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1;"><div style="font-size:12px; font-weight:700; color:#333; margin-bottom:4px;">' + giuntoData.nome + '</div><div onclick="apriNavigazioneBonifica(' + giuntoData.lat + ', ' + giuntoData.lon + ', \'' + giuntoData.nome.replace(/'/g, "\\'") + '\')" style="font-size:11px; color:#1976d2; cursor:pointer; text-decoration:underline;">📍 ' + giuntoData.lat.toFixed(5) + ', ' + giuntoData.lon.toFixed(5) + ' → Naviga</div></div><button onclick="rimuoviGiuntoBonifica(\'' + itemId + '\')" style="background:#f44336; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button></div>';
+                    
+                    document.getElementById('lista-bonifica-bonificati').appendChild(item);
+                });
+                
+            })
+            .catch(function(err) {
+                console.error('Errore caricamento Drive:', err);
+                
+                // Fallback a localStorage
+                var daBonificare = JSON.parse(localStorage.getItem('bonifica_da_bonificare') || '[]');
+                var bonificati = JSON.parse(localStorage.getItem('bonifica_bonificati') || '[]');
+                
+                alert('📦 Caricati dati da memoria locale.\n\n⚠️ Drive non raggiungibile.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                
+                // Ricarica da localStorage
+                document.getElementById('lista-bonifica-da-bonificare').innerHTML = '';
+                document.getElementById('lista-bonifica-bonificati').innerHTML = '';
+                
+                daBonificare.forEach(function(giuntoData) {
+                    var itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    var item = document.createElement('div');
+                    item.id = itemId;
+                    item.style.cssText = 'background:white; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px;';
+                    item.dataset.nome = giuntoData.nome;
+                    item.dataset.lat = giuntoData.lat;
+                    item.dataset.lon = giuntoData.lon;
+                    
+                    item.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1;"><div style="font-size:12px; font-weight:700; color:#333; margin-bottom:4px;">' + giuntoData.nome + '</div><div onclick="apriNavigazioneBonifica(' + giuntoData.lat + ', ' + giuntoData.lon + ', \'' + giuntoData.nome.replace(/'/g, "\\'") + '\')" style="font-size:11px; color:#1976d2; cursor:pointer; text-decoration:underline;">📍 ' + giuntoData.lat.toFixed(5) + ', ' + giuntoData.lon.toFixed(5) + ' → Naviga</div></div><button onclick="rimuoviGiuntoBonifica(\'' + itemId + '\')" style="background:#f44336; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button></div>';
+                    
+                    document.getElementById('lista-bonifica-da-bonificare').appendChild(item);
+                });
+                
+                bonificati.forEach(function(giuntoData) {
+                    var itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    var item = document.createElement('div');
+                    item.id = itemId;
+                    item.style.cssText = 'background:white; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px;';
+                    item.dataset.nome = giuntoData.nome;
+                    item.dataset.lat = giuntoData.lat;
+                    item.dataset.lon = giuntoData.lon;
+                    
+                    item.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1;"><div style="font-size:12px; font-weight:700; color:#333; margin-bottom:4px;">' + giuntoData.nome + '</div><div onclick="apriNavigazioneBonifica(' + giuntoData.lat + ', ' + giuntoData.lon + ', \'' + giuntoData.nome.replace(/'/g, "\\'") + '\')" style="font-size:11px; color:#1976d2; cursor:pointer; text-decoration:underline;">📍 ' + giuntoData.lat.toFixed(5) + ', ' + giuntoData.lon.toFixed(5) + ' → Naviga</div></div><button onclick="rimuoviGiuntoBonifica(\'' + itemId + '\')" style="background:#f44336; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button></div>';
+                    
+                    document.getElementById('lista-bonifica-bonificati').appendChild(item);
+                });
+            });
+        }
+        
         function caricaListaBonifica(tipo) {
             var key = tipo === 'da-bonificare' ? 'bonifica_da_bonificare' : 'bonifica_bonificati';
             var items = JSON.parse(localStorage.getItem(key) || '[]');
