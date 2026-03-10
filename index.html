@@ -767,19 +767,54 @@
         }
         
         function cercaGiuntoBonifica(tipo) {
+            alert('Funzione chiamata! Tipo: ' + tipo);
+            
             var searchId = 'search-bonifica-' + tipo;
             var selectId = 'select-bonifica-' + tipo;
             var searchInput = document.getElementById(searchId);
             var select = document.getElementById(selectId);
             
-            if (!searchInput || !select) return;
+            alert('Search input trovato: ' + (searchInput ? 'SI' : 'NO') + '\nSelect trovato: ' + (select ? 'SI' : 'NO'));
+            
+            if (!searchInput || !select) {
+                console.error('Search o Select non trovati!', searchId, selectId);
+                return;
+            }
             
             var filtro = searchInput.value.toLowerCase().trim();
             
-            Array.from(select.options).forEach(function(option) {
-                var text = option.textContent.toLowerCase();
-                option.style.display = text.includes(filtro) ? '' : 'none';
+            alert('Stai cercando: "' + filtro + '"');
+            console.log('Ricerca:', filtro);
+            
+            // Svuota select
+            select.innerHTML = '';
+            
+            var count = 0;
+            
+            // Ricrea opzioni filtrate
+            originalData.forEach(function(g) {
+                var nomeClean = g.n.replace(/[📍🔴✅🏢]/g, '').trim();
+                var indirizzo = g.a || '';
+                var circuito = g.c || '';
+                
+                // Controlla se matcha il filtro
+                var textToSearch = (nomeClean + ' ' + indirizzo + ' ' + circuito).toLowerCase();
+                
+                if (filtro === '' || textToSearch.includes(filtro)) {
+                    var option = document.createElement('option');
+                    option.value = JSON.stringify({
+                        nome: nomeClean,
+                        lat: g.lat,
+                        lon: g.lon
+                    });
+                    option.textContent = nomeClean + ' - ' + indirizzo.substring(0, 40);
+                    select.appendChild(option);
+                    count++;
+                }
             });
+            
+            alert('Trovati ' + count + ' giunti!');
+            console.log('Trovati', count, 'giunti con filtro:', filtro);
         }
         
         function aggiungiGiuntoBonifica(tipo) {
