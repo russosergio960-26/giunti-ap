@@ -492,7 +492,7 @@
                 
                 <!-- Barra ricerca -->
                 <input type="text" id="search-bonifica-da-bonificare" placeholder="🔍 Cerca giunto (nome, indirizzo, circuito)..." 
-                    onkeyup="filtraGiuntiBonifica('da-bonificare')"
+                    onkeyup="cercaGiuntoBonifica('da-bonificare')"
                     style="width:100%; padding:10px; border:1.5px solid #ddd; border-radius:8px; font-size:12px; margin-bottom:10px; outline:none;">
                 
                 <!-- Selettore giunti -->
@@ -503,7 +503,7 @@
                     </select>
                 </div>
                 
-                <button onclick="aggiungiAllaListaBonifica('da-bonificare')" 
+                <button onclick="aggiungiGiuntoBonifica('da-bonificare')" 
                     style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
                     ➕ Aggiungi Giunto Selezionato
                 </button>
@@ -541,7 +541,7 @@
                 
                 <!-- Barra ricerca -->
                 <input type="text" id="search-bonifica-bonificati" placeholder="🔍 Cerca giunto (nome, indirizzo, circuito)..." 
-                    onkeyup="filtraGiuntiBonifica('bonificati')"
+                    onkeyup="cercaGiuntoBonifica('bonificati')"
                     style="width:100%; padding:10px; border:1.5px solid #ddd; border-radius:8px; font-size:12px; margin-bottom:10px; outline:none;">
                 
                 <!-- Selettore giunti -->
@@ -552,7 +552,7 @@
                     </select>
                 </div>
                 
-                <button onclick="aggiungiAllaListaBonifica('bonificati')" 
+                <button onclick="aggiungiGiuntoBonifica('bonificati')" 
                     style="width:100%; padding:10px; background:#1976d2; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:12px;">
                     ➕ Aggiungi Giunto Selezionato
                 </button>
@@ -767,24 +767,14 @@
         }
         
         function cercaGiuntoBonifica(tipo) {
-            alert('Funzione chiamata! Tipo: ' + tipo);
-            
             var searchId = 'search-bonifica-' + tipo;
             var selectId = 'select-bonifica-' + tipo;
             var searchInput = document.getElementById(searchId);
             var select = document.getElementById(selectId);
             
-            alert('Search input trovato: ' + (searchInput ? 'SI' : 'NO') + '\nSelect trovato: ' + (select ? 'SI' : 'NO'));
-            
-            if (!searchInput || !select) {
-                console.error('Search o Select non trovati!', searchId, selectId);
-                return;
-            }
+            if (!searchInput || !select) return;
             
             var filtro = searchInput.value.toLowerCase().trim();
-            
-            alert('Stai cercando: "' + filtro + '"');
-            console.log('Ricerca:', filtro);
             
             // Svuota select
             select.innerHTML = '';
@@ -812,9 +802,6 @@
                     count++;
                 }
             });
-            
-            alert('Trovati ' + count + ' giunti!');
-            console.log('Trovati', count, 'giunti con filtro:', filtro);
         }
         
         function aggiungiGiuntoBonifica(tipo) {
@@ -916,21 +903,11 @@
             var selectId = 'select-bonifica-' + tipo;
             var select = document.getElementById(selectId);
             
-            console.log('popolaSelectBonifica chiamata per tipo:', tipo);
-            console.log('Select element trovato:', select);
-            
-            if (!select) {
-                console.error('Select NON trovato! ID cercato:', selectId);
-                alert('ERRORE: Select element non trovato! ID: ' + selectId);
-                return;
-            }
+            if (!select) return;
             
             // Svuota select prima di popolare
             select.innerHTML = '';
             
-            console.log('Popolo select con', originalData.length, 'giunti');
-            
-            var count = 0;
             originalData.forEach(function(g) {
                 var option = document.createElement('option');
                 var nomeClean = g.n.replace(/[📍🔴✅🏢]/g, '').trim();
@@ -941,10 +918,7 @@
                 });
                 option.textContent = nomeClean + ' - ' + (g.a || '').substring(0, 40);
                 select.appendChild(option);
-                count++;
             });
-            
-            console.log('✅ Select popolato con', count, 'opzioni');
         }
 
         function exportData() {
