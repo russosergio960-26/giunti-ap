@@ -923,6 +923,8 @@
             localStorage.setItem('bonifica_bonificati', JSON.stringify(bonificati));
             
             console.log('Dati da salvare:', {daBonificare: daBonificare, bonificati: bonificati});
+            console.log('Invio a:', SHEETS_URL);
+            console.log('Payload:', payload);
             
             // Prepara payload per Google Sheets
             var payload = {
@@ -935,13 +937,20 @@
             // Invia a Google Sheets
             fetch(SHEETS_URL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
-            }).then(function() {
-                alert('✅ Liste bonifiche salvate su Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length + '\n\nI tuoi colleghi potranno vederle con "📥 Carica da Drive"');
+            }).then(function(response) {
+                console.log('Risposta fetch:', response);
+                console.log('Status:', response.status);
+                
+                if (response.ok) {
+                    alert('✅ Liste bonifiche salvate su Drive!\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length + '\n\nI tuoi colleghi potranno vederle con "📥 Carica da Drive"');
+                } else {
+                    throw new Error('Risposta non OK: ' + response.status);
+                }
             }).catch(function(err) {
-                alert('✅ Salvato in locale!\n\n⚠️ Drive non raggiungibile, ma i dati sono al sicuro in locale.\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
+                console.error('Errore salvataggio Drive:', err);
+                alert('✅ Salvato in locale!\n\n⚠️ Drive non raggiungibile: ' + err.message + '\n\n🔴 Da bonificare: ' + daBonificare.length + '\n✅ Bonificati: ' + bonificati.length);
             });
         }
         
