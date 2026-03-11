@@ -896,6 +896,9 @@
         }
         
         function salvaListaBonificaSuDrive() {
+            console.log('=== FUNZIONE salvaListaBonificaSuDrive CHIAMATA ===');
+            console.log('SHEETS_URL:', SHEETS_URL);
+            
             // Raccogli dati
             var daBonificare = [];
             document.querySelectorAll('#lista-bonifica-da-bonificare > div').forEach(function(item) {
@@ -918,6 +921,8 @@
             // Salva locale
             localStorage.setItem('bonifica_da_bonificare', JSON.stringify(daBonificare));
             localStorage.setItem('bonifica_bonificati', JSON.stringify(bonificati));
+            
+            console.log('Dati da salvare:', {daBonificare: daBonificare, bonificati: bonificati});
             
             // Prepara payload per Google Sheets
             var payload = {
