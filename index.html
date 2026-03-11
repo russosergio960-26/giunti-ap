@@ -896,6 +896,7 @@
         }
         
         function salvaListaBonificaSuDrive() {
+            alert('FUNZIONE CHIAMATA!');
             console.log('=== FUNZIONE salvaListaBonificaSuDrive CHIAMATA ===');
             console.log('SHEETS_URL:', SHEETS_URL);
             
@@ -949,9 +950,9 @@
             alert('⏳ Caricamento da Drive...');
             
             // Carica da Google Sheets
-            fetch(SHEETS_URL + '?action=caricaBonifiche')
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
+            fetch(SHEETS_URL + '?action=caricaBonifiche').then(function(res) { 
+                return res.json(); 
+            }).then(function(data) {
                 console.log('Dati ricevuti da Drive:', data);
                 
                 var daBonificare = [];
@@ -1025,8 +1026,7 @@
                     document.getElementById('lista-bonifica-bonificati').appendChild(item);
                 });
                 
-            })
-            .catch(function(err) {
+            }).catch(function(err) {
                 console.error('Errore caricamento Drive:', err);
                 
                 // Fallback a localStorage
