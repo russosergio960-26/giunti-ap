@@ -973,20 +973,26 @@
                 return res.json(); 
             }).then(function(data) {
                 console.log('Dati ricevuti:', data);
+                alert('DEBUG: Dati ricevuti:\n' + JSON.stringify(data).substring(0, 200));
                 
                 var daBonificare = [];
                 var bonificati = [];
                 
                 if (data && data.note) {
+                    alert('DEBUG: Campo note trovato:\n' + data.note.substring(0, 200));
                     try {
                         var parsed = JSON.parse(data.note);
+                        alert('DEBUG: Parsed OK:\n' + JSON.stringify(parsed).substring(0, 200));
                         daBonificare = parsed.da_bonificare || [];
                         bonificati = parsed.bonificati || [];
                         
                         console.log('Dati estratti:', {daBonificare: daBonificare, bonificati: bonificati});
                     } catch(e) {
                         console.error('Errore parsing note:', e);
+                        alert('ERRORE parsing: ' + e.message);
                     }
+                } else {
+                    alert('DEBUG: Nessun campo note nei dati!');
                 }
                 
                 // Se non trovato su Drive, usa localStorage
@@ -1018,6 +1024,7 @@
                 
             }).catch(function(err) {
                 console.error('❌ ERRORE:', err);
+                alert('ERRORE caricamento:\n' + err.message);
                 
                 // Fallback a localStorage
                 var daBonificare = JSON.parse(localStorage.getItem('bonifica_da_bonificare') || '[]');
